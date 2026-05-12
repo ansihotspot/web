@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Starlink Obligations Response Modifier",
+  "version": "1.0.0",
+  "description": "Intercepte et modifie la reponse de /api/accounts/v1/accounts/customer-details/obligations sur starlink.com via un bouton dans la popup.",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": [
+    "https://*.starlink.com/*",
+    "https://starlink.com/*"
+  ],
+  "action": {
+    "default_title": "Obligations Modifier",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.starlink.com/*",
+        "https://starlink.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": [
+        "https://*.starlink.com/*",
+        "https://starlink.com/*"
+      ]
+    }
+  ]
+}
