@@ -3,13 +3,17 @@
 
   const state = {
     enabled: false,
-    payload: null
+    payload: null,
+    defaultPayload: null
   };
 
   window.addEventListener("obligations-modifier:config", (event) => {
     const detail = event.detail || {};
     state.enabled = !!detail.enabled;
     state.payload = typeof detail.payload === "string" ? detail.payload : null;
+    if (typeof detail.defaultPayload === "string") {
+      state.defaultPayload = detail.defaultPayload;
+    }
   });
 
   window.dispatchEvent(new CustomEvent("obligations-modifier:request-config"));
@@ -26,6 +30,7 @@
 
   function buildPayload() {
     if (state.payload) return state.payload;
+    if (state.defaultPayload) return state.defaultPayload;
     return JSON.stringify({
       content: [],
       errors: [],

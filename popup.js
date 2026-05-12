@@ -1,15 +1,19 @@
-const DEFAULT_PAYLOAD = {
-  content: [],
-  errors: [],
-  warnings: [],
-  information: [],
-  isValid: true
-};
-
 const toggleBtn = document.getElementById("toggle");
 const statusEl = document.getElementById("status");
 const payloadEl = document.getElementById("payload");
 const resetBtn = document.getElementById("reset");
+
+let defaultPayloadString = '{"content":[],"errors":[],"warnings":[],"information":[],"isValid":true}';
+
+async function loadDefault() {
+  try {
+    const res = await fetch(chrome.runtime.getURL("default-payload.json"));
+    const obj = await res.json();
+    defaultPayloadString = JSON.stringify(obj, null, 2);
+  } catch (e) {
+    console.warn("[ObligationsModifier] impossible de charger default-payload.json", e);
+  }
+}
 
 function render(state) {
   if (state.enabled) {
@@ -25,11 +29,11 @@ function render(state) {
   }
 }
 
-async function load() {
+async function init() {
+  await loadDefault();
   const stored = await chrome.storage.local.get(["enabled", "payload"]);
   const enabled = !!stored.enabled;
-  const payload = stored.payload ?? JSON.stringify(DEFAULT_PAYLOAD, null, 2);
-  payloadEl.value = payload;
+  payloadEl.value = stored.payload ?? defaultPayloadString;
   render({ enabled });
 }
 
@@ -55,7 +59,7 @@ toggleBtn.addEventListener("click", async () => {
 });
 
 resetBtn.addEventListener("click", async () => {
-  payloadEl.value = JSON.stringify(DEFAULT_PAYLOAD, null, 2);
+  payloadEl.value = defaultPayloadString;
   await chrome.storage.local.set({ payload: payloadEl.value });
 });
 
@@ -63,4 +67,4 @@ payloadEl.addEventListener("input", () => {
   persistPayload();
 });
 
-load();
+init();

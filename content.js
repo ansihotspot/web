@@ -7,15 +7,34 @@
   script.onload = () => script.remove();
   (document.head || document.documentElement).appendChild(script);
 
+  let defaultPayloadString = null;
+
+  async function loadDefault() {
+    if (defaultPayloadString !== null) return defaultPayloadString;
+    try {
+      const res = await fetch(chrome.runtime.getURL("default-payload.json"));
+      const obj = await res.json();
+      defaultPayloadString = JSON.stringify(obj);
+    } catch (e) {
+      console.warn("[ObligationsModifier] impossible de charger default-payload.json", e);
+      defaultPayloadString = '{"content":[],"errors":[],"warnings":[],"information":[],"isValid":true}';
+    }
+    return defaultPayloadString;
+  }
+
   function dispatchConfig(detail) {
     window.dispatchEvent(new CustomEvent("obligations-modifier:config", { detail }));
   }
 
   async function pushCurrentConfig() {
-    const { enabled, payload } = await chrome.storage.local.get(["enabled", "payload"]);
+    const [{ enabled, payload }, defaultPayload] = await Promise.all([
+      chrome.storage.local.get(["enabled", "payload"]),
+      loadDefault()
+    ]);
     dispatchConfig({
       enabled: !!enabled,
-      payload: payload ?? null
+      payload: payload ?? null,
+      defaultPayload
     });
   }
 
