@@ -35,7 +35,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["inject.js", "default-payload.json"],
+      "resources": ["inject.js"],
       "matches": [
         "https://*.starlink.com/*",
         "https://starlink.com/*"

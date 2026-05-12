@@ -1,19 +1,12 @@
+const DEFAULT_PATCH = {
+  verificationState: "Required",
+  isRestricted: false
+};
+
 const toggleBtn = document.getElementById("toggle");
 const statusEl = document.getElementById("status");
-const payloadEl = document.getElementById("payload");
-const resetBtn = document.getElementById("reset");
-
-let defaultPayloadString = '{"content":[],"errors":[],"warnings":[],"information":[],"isValid":true}';
-
-async function loadDefault() {
-  try {
-    const res = await fetch(chrome.runtime.getURL("default-payload.json"));
-    const obj = await res.json();
-    defaultPayloadString = JSON.stringify(obj, null, 2);
-  } catch (e) {
-    console.warn("[ObligationsModifier] impossible de charger default-payload.json", e);
-  }
-}
+const verifEl = document.getElementById("verificationState");
+const restrictedEl = document.getElementById("isRestricted");
 
 function render(state) {
   if (state.enabled) {
@@ -29,42 +22,31 @@ function render(state) {
   }
 }
 
-async function init() {
-  await loadDefault();
-  const stored = await chrome.storage.local.get(["enabled", "payload"]);
-  const enabled = !!stored.enabled;
-  payloadEl.value = stored.payload ?? defaultPayloadString;
-  render({ enabled });
+async function load() {
+  const stored = await chrome.storage.local.get(["enabled", "patch"]);
+  const patch = stored.patch ?? DEFAULT_PATCH;
+  verifEl.value = patch.verificationState ?? "Required";
+  restrictedEl.checked = !!patch.isRestricted;
+  render({ enabled: !!stored.enabled });
 }
 
-async function persistPayload() {
-  const value = payloadEl.value;
-  try {
-    JSON.parse(value);
-  } catch {
-    statusEl.textContent = "JSON invalide";
-    return false;
-  }
-  await chrome.storage.local.set({ payload: value });
-  return true;
+async function persistPatch() {
+  const patch = {
+    verificationState: verifEl.value,
+    isRestricted: restrictedEl.checked
+  };
+  await chrome.storage.local.set({ patch });
 }
 
 toggleBtn.addEventListener("click", async () => {
-  const ok = await persistPayload();
-  if (!ok) return;
+  await persistPatch();
   const { enabled } = await chrome.storage.local.get(["enabled"]);
   const next = !enabled;
   await chrome.storage.local.set({ enabled: next });
   render({ enabled: next });
 });
 
-resetBtn.addEventListener("click", async () => {
-  payloadEl.value = defaultPayloadString;
-  await chrome.storage.local.set({ payload: payloadEl.value });
-});
+verifEl.addEventListener("input", persistPatch);
+restrictedEl.addEventListener("change", persistPatch);
 
-payloadEl.addEventListener("input", () => {
-  persistPayload();
-});
-
-init();
+load();
