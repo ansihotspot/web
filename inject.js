@@ -1,5 +1,12 @@
 (() => {
+  const TAG = "[ObligationsModifier:main]";
   const ENDPOINT_PATH = "/api/accounts/v1/accounts/customer-details/obligations";
+
+  if (window.__obligationsModifierInstalled) {
+    console.info(TAG, "already installed, skipping");
+    return;
+  }
+  window.__obligationsModifierInstalled = true;
 
   const state = {
     enabled: false,
@@ -15,6 +22,7 @@
         isRestricted: !!detail.patch.isRestricted
       };
     }
+    console.info(TAG, "config updated", { ...state });
   });
 
   window.dispatchEvent(new CustomEvent("obligations-modifier:request-config"));
@@ -58,7 +66,11 @@
   const originalFetch = window.fetch.bind(window);
   window.fetch = async function patchedFetch(input, init) {
     const url = typeof input === "string" ? input : input && input.url;
-    if (!state.enabled || !isTargetUrl(url)) {
+    const matches = isTargetUrl(url);
+    if (matches) {
+      console.info(TAG, "fetch detected on target", url, "enabled =", state.enabled);
+    }
+    if (!state.enabled || !matches) {
       return originalFetch(input, init);
     }
     const response = await originalFetch(input, init);
@@ -68,10 +80,10 @@
       const data = JSON.parse(text);
       applyPatch(data);
       const newBody = JSON.stringify(data);
-      console.info("[ObligationsModifier] fetch patche pour", url, state.patch);
+      console.info(TAG, "fetch patched", state.patch);
       return rebuildResponse(response, newBody);
     } catch (e) {
-      console.warn("[ObligationsModifier] echec patch, reponse originale renvoyee", e);
+      console.warn(TAG, "patch failed, returning original", e);
       return response;
     }
   };
@@ -81,12 +93,15 @@
     const xhr = new OriginalXHR();
     let targetUrl = null;
     let intercept = false;
-    let originalForcedText = null;
+    let forcedText = null;
 
     const open = xhr.open;
     xhr.open = function (method, url, ...rest) {
       targetUrl = url;
       intercept = isTargetUrl(url);
+      if (intercept) {
+        console.info(TAG, "XHR open on target", url, "enabled =", state.enabled);
+      }
       return open.call(xhr, method, url, ...rest);
     };
 
@@ -97,12 +112,12 @@
         const raw = xhr.responseText;
         const data = JSON.parse(raw);
         applyPatch(data);
-        originalForcedText = JSON.stringify(data);
-        Object.defineProperty(xhr, "responseText", { configurable: true, get: () => originalForcedText });
-        Object.defineProperty(xhr, "response", { configurable: true, get: () => originalForcedText });
-        console.info("[ObligationsModifier] XHR patche pour", targetUrl, state.patch);
+        forcedText = JSON.stringify(data);
+        Object.defineProperty(xhr, "responseText", { configurable: true, get: () => forcedText });
+        Object.defineProperty(xhr, "response", { configurable: true, get: () => forcedText });
+        console.info(TAG, "XHR patched", state.patch);
       } catch (e) {
-        console.warn("[ObligationsModifier] XHR patch impossible", e);
+        console.warn(TAG, "XHR patch failed", e);
       }
     });
 
@@ -116,5 +131,5 @@
   PatchedXHR.DONE = 4;
   window.XMLHttpRequest = PatchedXHR;
 
-  console.info("[ObligationsModifier] patcher installe pour", ENDPOINT_PATH);
+  console.info(TAG, "interceptor installed in MAIN world for", ENDPOINT_PATH);
 })();

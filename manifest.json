@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Starlink Obligations Response Modifier",
-  "version": "1.0.0",
-  "description": "Intercepte et modifie la reponse de /api/accounts/v1/accounts/customer-details/obligations sur starlink.com via un bouton dans la popup.",
-  "permissions": ["storage", "scripting", "activeTab"],
+  "version": "1.1.0",
+  "description": "Intercepte et modifie la reponse de /api/accounts/v1/accounts/customer-details/obligations sur starlink.com.",
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://*.starlink.com/*",
     "https://starlink.com/*"
@@ -28,24 +28,25 @@
         "https://*.starlink.com/*",
         "https://starlink.com/*"
       ],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*.starlink.com/*",
+        "https://starlink.com/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_start",
       "all_frames": true
     }
   ],
-  "web_accessible_resources": [
-    {
-      "resources": ["inject.js"],
-      "matches": [
-        "https://*.starlink.com/*",
-        "https://starlink.com/*"
-      ]
-    }
-  ],
   "browser_specific_settings": {
     "gecko": {
       "id": "starlink-obligations-modifier@local",
-      "strict_min_version": "115.0"
+      "strict_min_version": "128.0"
     }
   }
 }

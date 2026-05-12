@@ -15,9 +15,10 @@ intacts.
 4. Cliquer sur **Charger l'extension non empaquetee**
 5. Selectionner le dossier decompresse
 
-## Installation Firefox
+## Installation Firefox (>= 128)
 
-Deux options.
+L'extension utilise les content scripts en world `MAIN` (specifie dans
+le manifest), supporte a partir de Firefox 128 (juillet 2024).
 
 ### A. Chargement temporaire (recommande pour test)
 
@@ -31,13 +32,27 @@ L'extension reste active jusqu'au redemarrage de Firefox.
 ### B. Installation persistante (Firefox Developer Edition / Nightly / ESR)
 
 1. Ouvrir `about:config` et passer
-   `xpinstall.signatures.required` a `false` (necessite Developer
-   Edition, Nightly ou ESR; Firefox release refuse les extensions non
-   signees)
+   `xpinstall.signatures.required` a `false`
 2. Glisser-deposer le fichier `.xpi` sur la fenetre Firefox
 
-Pour un Firefox release, il faudrait signer le `.xpi` chez Mozilla
-(addons.mozilla.org).
+## Verification (console)
+
+Ouvrir DevTools sur l'onglet starlink.com (F12) puis l'onglet
+**Console**. Au chargement de la page, on doit voir:
+
+```
+[ObligationsModifier:main]  interceptor installed in MAIN world for /api/.../obligations
+[ObligationsModifier:content] loaded in isolated world
+[ObligationsModifier:content] pushing config { enabled: ..., patch: {...} }
+[ObligationsModifier:main]  config updated { enabled: ..., patch: {...} }
+```
+
+Quand la page declenche l'appel:
+
+```
+[ObligationsModifier:main] fetch detected on target https://starlink.com/api/.../obligations enabled = true
+[ObligationsModifier:main] fetch patched { verificationState: ..., isRestricted: ... }
+```
 
 ## Utilisation
 
