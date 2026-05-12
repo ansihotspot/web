@@ -41,5 +41,11 @@
         "https://starlink.com/*"
       ]
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "starlink-obligations-modifier@local",
+      "strict_min_version": "115.0"
+    }
+  }
 }
