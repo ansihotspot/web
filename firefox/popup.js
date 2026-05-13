@@ -18,6 +18,14 @@ document.addEventListener("DOMContentLoaded", function () {
   restrictedEl.addEventListener("change", persist);
   resetBtn.addEventListener("click", onResetCount);
 
+  var openScannerBtn = document.getElementById("openScannerBtn");
+  if (openScannerBtn) {
+    openScannerBtn.addEventListener("click", function () {
+      browserAPI.runtime.sendMessage({ type: "OPEN_SCANNER" });
+      window.close();
+    });
+  }
+
   loadState();
   listenForUpdates();
 });

@@ -19,6 +19,17 @@ Architecture MV2 avec `webRequest.filterResponseData`: l'extension
 intercepte les octets de la reponse au niveau reseau, ce qui contourne
 toute CSP de la page et ne necessite aucune injection de script.
 
+Inclut un **scanner d'endpoints** (bouton dans la popup):
+
+- **Observation passive**: toutes les requetes vers `*.starlink.com/api/*`
+  sont loggees (methode + path + status + nombre de hits). Navigue sur
+  le site, la liste se remplit toute seule.
+- **Scan actif**: pour un (ou plusieurs) path, l'extension envoie
+  GET / POST / PUT / PATCH / DELETE / HEAD / OPTIONS avec les cookies
+  de session et affiche le status retourne par chaque methode. Pour
+  chaque endpoint observe il y a aussi un bouton "Probe methodes" qui
+  fait pareil en un clic.
+
 ### Installation temporaire
 
 1. Telecharger `starlink-obligations-modifier-firefox.xpi`

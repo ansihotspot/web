@@ -13,6 +13,7 @@
     "webRequest",
     "webRequestBlocking",
     "storage",
+    "tabs",
     "https://starlink.com/*",
     "https://*.starlink.com/*"
   ],
