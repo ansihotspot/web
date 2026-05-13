@@ -425,7 +425,8 @@
 
         <label>Format du body</label>
         <select id="submitBodyShape" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
-          <option value="flat">flat  -  {verificationState, isRestricted}</option>
+          <option value="empty">empty  -  pas de body (endpoint d'action)</option>
+          <option value="flat" selected>flat  -  {verificationState, isRestricted}</option>
           <option value="wrappedContent">wrapped  -  {content:[{verificationState, isRestricted}]}</option>
           <option value="wrappedItem">wrapped item  -  {verificationState, isRestricted, configurationId:-62}</option>
           <option value="custom">custom (j'edite a la main)</option>

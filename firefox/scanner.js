@@ -511,6 +511,9 @@ function buildSubmitBody() {
   if (shape === "custom") {
     return document.getElementById("submitBody").value;
   }
+  if (shape === "empty") {
+    return "";
+  }
   if (shape === "flat") {
     return JSON.stringify({ verificationState: verificationState, isRestricted: isRestricted }, null, 2);
   }
