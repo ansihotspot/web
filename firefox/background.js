@@ -438,7 +438,47 @@ browserAPI.runtime.onMessage.addListener(function (message, sender, sendResponse
     sendResponse({ ok: true });
     return true;
   }
+
+  if (message.type === "SUBMIT") {
+    submitRequest(message.url, message.method, message.body)
+      .then(function (r) { sendResponse({ ok: true, result: r }); })
+      .catch(function (e) { sendResponse({ ok: false, error: e.message || String(e) }); });
+    return true;
+  }
 });
+
+// === SUBMIT (POST / PUT / PATCH avec cookies de session) ===
+
+async function submitRequest(url, method, rawBody) {
+  var start = Date.now();
+  var opts = {
+    method: method || "POST",
+    credentials: "include",
+    cache: "no-store",
+    redirect: "manual",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    }
+  };
+  if (method !== "GET" && method !== "HEAD") {
+    opts.body = rawBody || "";
+  }
+  var res = await fetch(url, opts);
+  var text = "";
+  try { text = await res.text(); } catch (e) {}
+  var bodySnippet = text.length > 2000 ? text.substring(0, 2000) + "\n... (tronque)" : text;
+  return {
+    url: url,
+    method: method,
+    status: res.status,
+    statusText: res.statusText,
+    contentType: res.headers.get("content-type"),
+    contentLength: res.headers.get("content-length"),
+    duration: Date.now() - start,
+    bodySnippet: bodySnippet
+  };
+}
 
 // === BADGE ===
 

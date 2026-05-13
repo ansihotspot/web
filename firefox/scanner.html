@@ -262,7 +262,14 @@
         <button id="runScanBtn" class="primary" style="margin-top:12px;width:100%;">Lancer le scan</button>
       </div>
 
-      <h2 style="margin-top:18px;">Resultats</h2>
+      <h2 style="margin-top:18px;">
+        Resultats
+        <div class="actions">
+          <button id="copyScanJsonBtn">Copier JSON</button>
+          <button id="copyScanCurlBtn">Copier cURL</button>
+          <button id="copyScanTextBtn">Copier texte</button>
+        </div>
+      </h2>
       <div class="scroll-area" style="max-height:240px;">
         <table id="resultsTable">
           <thead>
@@ -343,7 +350,14 @@
       </div>
     </div>
 
-    <h2 style="margin-top:18px;">Resultats bruteforce</h2>
+    <h2 style="margin-top:18px;">
+      Resultats bruteforce
+      <div class="actions">
+        <button id="copyBruteJsonBtn">Copier JSON</button>
+        <button id="copyBruteCurlBtn">Copier cURL</button>
+        <button id="copyBruteTextBtn">Copier texte</button>
+      </div>
+    </h2>
     <div class="scroll-area" style="max-height:400px;">
       <table id="bruteResultsTable">
         <thead>
@@ -359,6 +373,78 @@
         <tbody></tbody>
       </table>
       <div id="bruteResultsEmpty" class="empty">Lance le bruteforce pour voir les decouvertes ici.</div>
+    </div>
+  </div>
+
+  <!-- =================== SOUMISSION POST/PUT/PATCH =================== -->
+  <div class="card" style="margin-top:16px;">
+    <h2>
+      Soumettre la modification (POST / PUT / PATCH)
+      <div class="actions">
+        <button id="rebuildBodyBtn">Reconstruire le body</button>
+      </div>
+    </h2>
+
+    <div class="scan-form" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div>
+        <label>Endpoint preset</label>
+        <select id="submitPreset" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
+          <option value="POST|/api/accounts/v1/accounts/customer-details/travel-obligations/global">POST  travel-obligations/global</option>
+          <option value="PUT|/api/accounts/v1/accounts/customer-details">PUT   customer-details</option>
+          <option value="POST|/api/accounts/v1/accounts/customer-details">POST  customer-details</option>
+          <option value="POST|/api/accounts/v1/accounts/customer-details/obligations">POST  customer-details/obligations</option>
+          <option value="PUT|/api/accounts/v1/accounts/customer-details/obligations">PUT   customer-details/obligations</option>
+          <option value="PATCH|/api/accounts/v1/accounts/customer-details/obligations">PATCH customer-details/obligations</option>
+          <option value="POST|/api/accounts/v1/accounts/customer-details/verification">POST  customer-details/verification</option>
+          <option value="custom">[ Personnalise... ]</option>
+        </select>
+
+        <label>Methode</label>
+        <div class="methods-grid" style="grid-template-columns:repeat(3,1fr);">
+          <label class="method-chip"><input type="radio" name="submitMethod" value="POST" checked> POST</label>
+          <label class="method-chip"><input type="radio" name="submitMethod" value="PUT"> PUT</label>
+          <label class="method-chip"><input type="radio" name="submitMethod" value="PATCH"> PATCH</label>
+        </div>
+
+        <label>URL complete (editable)</label>
+        <input id="submitUrl" type="text" value="https://starlink.com/api/accounts/v1/accounts/customer-details/travel-obligations/global" />
+
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <div style="flex:1;">
+            <label style="margin-top:0;">verificationState</label>
+            <input id="submitVerifState" type="text" value="NotRequired" />
+          </div>
+          <div style="flex:1;">
+            <label style="margin-top:0;">isRestricted</label>
+            <select id="submitIsRestricted" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px 10px;font-family:'SF Mono','Consolas',monospace;font-size:12px;">
+              <option value="false" selected>false</option>
+              <option value="true">true</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Format du body</label>
+        <select id="submitBodyShape" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
+          <option value="flat">flat  -  {verificationState, isRestricted}</option>
+          <option value="wrappedContent">wrapped  -  {content:[{verificationState, isRestricted}]}</option>
+          <option value="wrappedItem">wrapped item  -  {verificationState, isRestricted, configurationId:-62}</option>
+          <option value="custom">custom (j'edite a la main)</option>
+        </select>
+
+        <button id="submitBtn" class="primary" style="margin-top:14px;width:100%;">Envoyer</button>
+      </div>
+
+      <div>
+        <label>Body envoye (JSON, editable)</label>
+        <textarea id="submitBody" style="min-height:200px;font-family:'SF Mono','Consolas',monospace;font-size:11px;"></textarea>
+
+        <label>Reponse</label>
+        <div id="submitResponse" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;font-family:'SF Mono','Consolas',monospace;font-size:11px;min-height:120px;max-height:260px;overflow:auto;white-space:pre-wrap;color:#aaa;">En attente d'envoi...</div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button id="copyResponseBtn" class="small-btn">Copier la reponse</button>
+          <button id="copyCurlBtn" class="small-btn">Copier en cURL</button>
+        </div>
+      </div>
     </div>
   </div>
 

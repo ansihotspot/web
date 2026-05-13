@@ -6,6 +6,7 @@ var filterInput, runScanBtn, scanPathsEl, scanBodyEl, refreshBtn, clearObsBtn;
 var methodChipsContainer;
 var probeCount = 0;
 var observedCache = {};
+var lastScanResults = []; // flat list of probe results from active scan
 
 document.addEventListener("DOMContentLoaded", function () {
   observedTableBody = document.querySelector("#observedTable tbody");
@@ -212,6 +213,7 @@ function probePath(path) {
 
 function renderResults(batch) {
   resultsTableBody.innerHTML = "";
+  lastScanResults = [];
   var any = false;
   for (var i = 0; i < batch.length; i++) {
     var path = batch[i].path;
@@ -219,6 +221,7 @@ function renderResults(batch) {
     for (var j = 0; j < results.length; j++) {
       any = true;
       var r = results[j];
+      lastScanResults.push({ path: path, method: r.method, status: r.ok ? r.status : 0, statusText: r.statusText || r.error || "", contentType: r.contentType, allow: r.allow });
       probeCount++;
       var tr = document.createElement("tr");
 
@@ -427,6 +430,201 @@ function listenForUpdates() {
 }
 
 initBruteforce();
+
+// === COPY / EXPORT ===
+
+function copyToClipboard(text, label) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () {
+      showToast(label || "Copie!");
+    }).catch(function () { fallbackCopy(text, label); });
+  } else {
+    fallbackCopy(text, label);
+  }
+}
+
+function fallbackCopy(text, label) {
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); showToast(label || "Copie!"); }
+  catch (e) { showToast("Echec copie"); }
+  document.body.removeChild(ta);
+}
+
+function formatAsText(rows) {
+  return rows.map(function (r) {
+    var s = r.status ? String(r.status) : "ERR";
+    return s.padEnd(4) + " " + (r.method || "?").padEnd(7) + " " + r.path;
+  }).join("\n");
+}
+
+function formatAsCurl(rows) {
+  var seen = {};
+  var out = [];
+  rows.forEach(function (r) {
+    var key = r.method + " " + r.path;
+    if (seen[key]) return;
+    seen[key] = 1;
+    var url = "https://starlink.com" + (r.path.indexOf("/") === 0 ? r.path : "/" + r.path);
+    var line = "curl -X " + r.method + " '" + url + "'";
+    line += " -b 'Starlink.Com.Sso=...; Starlink.Com.Access.V1=...'";
+    if (r.method !== "GET" && r.method !== "HEAD" && r.method !== "OPTIONS") {
+      line += " -H 'Content-Type: application/json'";
+      line += " --data '{}'";
+    }
+    out.push(line);
+  });
+  return out.join("\n\n");
+}
+
+function initCopyExport() {
+  var bind = function (id, getter, label) {
+    var b = document.getElementById(id);
+    if (b) b.addEventListener("click", function () {
+      var v = getter();
+      if (!v) { showToast("Rien a copier"); return; }
+      copyToClipboard(v, label);
+    });
+  };
+
+  bind("copyScanJsonBtn", function () { return JSON.stringify(lastScanResults, null, 2); }, "JSON copie (scan)");
+  bind("copyScanTextBtn", function () { return formatAsText(lastScanResults); }, "Texte copie (scan)");
+  bind("copyScanCurlBtn", function () { return formatAsCurl(lastScanResults); }, "cURL copie (scan)");
+
+  bind("copyBruteJsonBtn", function () { return JSON.stringify(bruteResults, null, 2); }, "JSON copie (brute)");
+  bind("copyBruteTextBtn", function () { return formatAsText(bruteResults); }, "Texte copie (brute)");
+  bind("copyBruteCurlBtn", function () { return formatAsCurl(bruteResults); }, "cURL copie (brute)");
+}
+initCopyExport();
+
+// === SUBMIT POST/PUT/PATCH ===
+
+function buildSubmitBody() {
+  var shape = document.getElementById("submitBodyShape").value;
+  var verificationState = document.getElementById("submitVerifState").value;
+  var isRestricted = document.getElementById("submitIsRestricted").value === "true";
+
+  if (shape === "custom") {
+    return document.getElementById("submitBody").value;
+  }
+  if (shape === "flat") {
+    return JSON.stringify({ verificationState: verificationState, isRestricted: isRestricted }, null, 2);
+  }
+  if (shape === "wrappedContent") {
+    return JSON.stringify({
+      content: [{ verificationState: verificationState, isRestricted: isRestricted }]
+    }, null, 2);
+  }
+  if (shape === "wrappedItem") {
+    return JSON.stringify({
+      verificationState: verificationState,
+      isRestricted: isRestricted,
+      configurationId: -62
+    }, null, 2);
+  }
+  return "";
+}
+
+function rebuildSubmitBody() {
+  var bodyEl = document.getElementById("submitBody");
+  var shape = document.getElementById("submitBodyShape").value;
+  if (shape !== "custom") {
+    bodyEl.value = buildSubmitBody();
+  }
+}
+
+function applyPreset() {
+  var preset = document.getElementById("submitPreset").value;
+  if (preset === "custom") return;
+  var parts = preset.split("|");
+  var method = parts[0];
+  var path = parts[1];
+  document.querySelector('input[name="submitMethod"][value="' + method + '"]').checked = true;
+  document.getElementById("submitUrl").value = "https://starlink.com" + path;
+}
+
+function initSubmit() {
+  var preset = document.getElementById("submitPreset");
+  var shape = document.getElementById("submitBodyShape");
+  var verifEl = document.getElementById("submitVerifState");
+  var restrictedEl = document.getElementById("submitIsRestricted");
+  var bodyEl = document.getElementById("submitBody");
+  var responseEl = document.getElementById("submitResponse");
+
+  preset.addEventListener("change", function () {
+    applyPreset();
+  });
+  shape.addEventListener("change", rebuildSubmitBody);
+  verifEl.addEventListener("input", rebuildSubmitBody);
+  restrictedEl.addEventListener("change", rebuildSubmitBody);
+
+  document.getElementById("rebuildBodyBtn").addEventListener("click", function () {
+    bodyEl.value = buildSubmitBody();
+    showToast("Body reconstruit");
+  });
+
+  document.getElementById("submitBtn").addEventListener("click", function () {
+    var url = document.getElementById("submitUrl").value.trim();
+    var method = document.querySelector('input[name="submitMethod"]:checked').value;
+    var body = bodyEl.value;
+    if (!url) { showToast("URL requise"); return; }
+
+    responseEl.style.color = "#aaa";
+    responseEl.textContent = "Envoi en cours...\n" + method + " " + url + "\n\n" + body;
+
+    browserAPI.runtime.sendMessage({
+      type: "SUBMIT",
+      url: url,
+      method: method,
+      body: body
+    }, function (resp) {
+      if (!resp) {
+        responseEl.style.color = "#e94560";
+        responseEl.textContent = "Pas de reponse";
+        return;
+      }
+      if (!resp.ok && resp.error) {
+        responseEl.style.color = "#e94560";
+        responseEl.textContent = "ERREUR\n" + resp.error;
+        return;
+      }
+      var r = resp.result;
+      var cls = r.status >= 200 && r.status < 300 ? "#4CAF50" : (r.status >= 400 ? "#e94560" : "#FF9800");
+      responseEl.style.color = cls;
+      var out = "Status: " + r.status + " " + (r.statusText || "") + "\n";
+      out += "Content-Type: " + (r.contentType || "-") + "\n";
+      out += "Duree: " + r.duration + "ms\n\n";
+      out += "--- BODY ---\n";
+      out += r.bodySnippet || "(pas de body texte)";
+      responseEl.textContent = out;
+      showToast(r.status >= 200 && r.status < 300 ? "Succes!" : "Reponse " + r.status);
+    });
+  });
+
+  document.getElementById("copyResponseBtn").addEventListener("click", function () {
+    copyToClipboard(responseEl.textContent, "Reponse copiee");
+  });
+
+  document.getElementById("copyCurlBtn").addEventListener("click", function () {
+    var url = document.getElementById("submitUrl").value.trim();
+    var method = document.querySelector('input[name="submitMethod"]:checked').value;
+    var body = bodyEl.value;
+    var cmd = "curl -X " + method + " '" + url + "' \\\n";
+    cmd += "  -H 'Content-Type: application/json' \\\n";
+    cmd += "  -H 'Accept: application/json' \\\n";
+    cmd += "  -b 'Starlink.Com.Sso=...; Starlink.Com.Access.V1=...' \\\n";
+    cmd += "  --data " + JSON.stringify(body);
+    copyToClipboard(cmd, "cURL copie");
+  });
+
+  // initial body fill
+  rebuildSubmitBody();
+}
+initSubmit();
 
 function showToast(text) {
   var t = document.getElementById("toast");
