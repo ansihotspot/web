@@ -501,89 +501,339 @@ function initCopyExport() {
 }
 initCopyExport();
 
-// === SUBMIT POST/PUT/PATCH ===
+// === SUBMIT POST/PUT/PATCH - FORMULAIRE DYNAMIQUE ===
 
-function buildSubmitBody() {
-  var shape = document.getElementById("submitBodyShape").value;
-  var verificationState = document.getElementById("submitVerifState").value;
-  var isRestricted = document.getElementById("submitIsRestricted").value === "true";
+// formFields = [{ key, type, value, enabled }]
+var formFields = [];
 
-  if (shape === "custom") {
-    return document.getElementById("submitBody").value;
+var TEMPLATES = {
+  "travel-obligations": {
+    method: "POST",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details/travel-obligations/global",
+    wrap: "empty",
+    fields: []
+  },
+  "obligations-flat": {
+    method: "POST",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details/obligations",
+    wrap: "none",
+    fields: [
+      { key: "verificationState", type: "string", value: "NotRequired", enabled: true },
+      { key: "isRestricted", type: "boolean", value: false, enabled: true },
+      { key: "configurationId", type: "number", value: -62, enabled: false },
+      { key: "stateChangeReason", type: "string", value: "", enabled: false },
+      { key: "verificationDeadlineDate", type: "date", value: "", enabled: false },
+      { key: "verificationExpiryDate", type: "date", value: "", enabled: false }
+    ]
+  },
+  "customer-details-put": {
+    method: "PUT",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "none",
+    fields: [
+      { key: "fullLegalName", type: "string", value: "", enabled: true },
+      { key: "nationality", type: "string", value: "FR", enabled: true },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true },
+      { key: "passportNumber", type: "string", value: "", enabled: true },
+      { key: "phoneNumber", type: "string", value: "", enabled: false },
+      { key: "addressLine1", type: "string", value: "", enabled: false },
+      { key: "addressLine2", type: "string", value: "", enabled: false },
+      { key: "city", type: "string", value: "", enabled: false },
+      { key: "region", type: "string", value: "", enabled: false },
+      { key: "postalCode", type: "string", value: "", enabled: false },
+      { key: "country", type: "string", value: "FR", enabled: false }
+    ]
+  },
+  "customer-details-post": {
+    method: "POST",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "none",
+    fields: [
+      { key: "fullLegalName", type: "string", value: "", enabled: true },
+      { key: "nationality", type: "string", value: "FR", enabled: true },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true },
+      { key: "passportNumber", type: "string", value: "", enabled: true }
+    ]
+  },
+  "verification": {
+    method: "POST",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details/verification",
+    wrap: "none",
+    fields: [
+      { key: "verificationState", type: "string", value: "Completed", enabled: true },
+      { key: "isRestricted", type: "boolean", value: false, enabled: true },
+      { key: "configurationId", type: "number", value: -62, enabled: false }
+    ]
+  },
+  "custom": {
+    method: "POST",
+    url: "https://starlink.com/api/",
+    wrap: "none",
+    fields: []
   }
-  if (shape === "empty") {
-    return "";
+};
+
+function loadTemplate(name) {
+  var tpl = TEMPLATES[name];
+  if (!tpl) return;
+  document.querySelector('input[name="submitMethod"][value="' + tpl.method + '"]').checked = true;
+  document.getElementById("submitUrl").value = tpl.url;
+  document.getElementById("submitWrap").value = tpl.wrap;
+  formFields = tpl.fields.map(function (f) {
+    return { key: f.key, type: f.type, value: f.value, enabled: f.enabled };
+  });
+  renderFormFields();
+  rebuildBodyFromForm();
+}
+
+function renderFormFields() {
+  var container = document.getElementById("formFields");
+  container.innerHTML = "";
+  if (formFields.length === 0) {
+    var hint = document.createElement("div");
+    hint.style.cssText = "padding:14px;text-align:center;color:#555;font-size:11px;";
+    hint.textContent = "Aucun champ. Choisis un template ou ajoute un champ.";
+    container.appendChild(hint);
+    return;
   }
-  if (shape === "flat") {
-    return JSON.stringify({ verificationState: verificationState, isRestricted: isRestricted }, null, 2);
+  for (var i = 0; i < formFields.length; i++) {
+    container.appendChild(renderFieldRow(i, formFields[i]));
   }
-  if (shape === "wrappedContent") {
-    return JSON.stringify({
-      content: [{ verificationState: verificationState, isRestricted: isRestricted }]
-    }, null, 2);
+}
+
+function renderFieldRow(index, field) {
+  var row = document.createElement("div");
+  row.style.cssText = "display:grid;grid-template-columns:24px 1fr auto 1.4fr 80px 24px;gap:6px;align-items:center;padding:4px 6px;background:rgba(255,255,255,0.02);border-radius:4px;";
+
+  // 1. enable checkbox
+  var check = document.createElement("input");
+  check.type = "checkbox";
+  check.checked = !!field.enabled;
+  check.title = "Inclure dans le body";
+  check.style.cssText = "accent-color:#00d4ff;";
+  check.addEventListener("change", function () {
+    formFields[index].enabled = check.checked;
+    rebuildBodyFromForm();
+  });
+  row.appendChild(check);
+
+  // 2. key
+  var keyInput = document.createElement("input");
+  keyInput.type = "text";
+  keyInput.value = field.key;
+  keyInput.placeholder = "nom du champ";
+  keyInput.style.cssText = "background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;color:#00d4ff;padding:4px 6px;font-family:'SF Mono','Consolas',monospace;font-size:11px;outline:none;";
+  keyInput.addEventListener("input", function () {
+    formFields[index].key = keyInput.value;
+    rebuildBodyFromForm();
+  });
+  row.appendChild(keyInput);
+
+  // 3. label "="
+  var eq = document.createElement("span");
+  eq.textContent = "=";
+  eq.style.cssText = "color:#555;font-family:'SF Mono','Consolas',monospace;";
+  row.appendChild(eq);
+
+  // 4. value input (selon type)
+  var valWrap = document.createElement("div");
+  valWrap.appendChild(renderValueInput(index, field));
+  row.appendChild(valWrap);
+
+  // 5. type selector
+  var typeSel = document.createElement("select");
+  typeSel.style.cssText = "background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;color:#e4e4e4;padding:3px 4px;font-family:'SF Mono','Consolas',monospace;font-size:10px;outline:none;";
+  ["string", "number", "boolean", "date", "null"].forEach(function (t) {
+    var opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    if (t === field.type) opt.selected = true;
+    typeSel.appendChild(opt);
+  });
+  typeSel.addEventListener("change", function () {
+    formFields[index].type = typeSel.value;
+    formFields[index].value = defaultValueForType(typeSel.value);
+    renderFormFields();
+    rebuildBodyFromForm();
+  });
+  row.appendChild(typeSel);
+
+  // 6. delete
+  var del = document.createElement("button");
+  del.textContent = "x";
+  del.title = "Supprimer";
+  del.style.cssText = "background:rgba(233,69,96,0.1);border:1px solid rgba(233,69,96,0.3);color:#e94560;border-radius:4px;padding:2px;cursor:pointer;font-size:11px;font-weight:700;";
+  del.addEventListener("click", function () {
+    formFields.splice(index, 1);
+    renderFormFields();
+    rebuildBodyFromForm();
+  });
+  row.appendChild(del);
+
+  return row;
+}
+
+function renderValueInput(index, field) {
+  var common = "width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;color:#e4e4e4;padding:4px 6px;font-family:'SF Mono','Consolas',monospace;font-size:11px;outline:none;";
+  if (field.type === "boolean") {
+    var sel = document.createElement("select");
+    sel.style.cssText = common;
+    [["false", "false"], ["true", "true"]].forEach(function (p) {
+      var opt = document.createElement("option");
+      opt.value = p[0]; opt.textContent = p[1];
+      if (String(field.value) === p[0]) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", function () {
+      formFields[index].value = sel.value === "true";
+      rebuildBodyFromForm();
+    });
+    return sel;
   }
-  if (shape === "wrappedItem") {
-    return JSON.stringify({
-      verificationState: verificationState,
-      isRestricted: isRestricted,
-      configurationId: -62
-    }, null, 2);
+  if (field.type === "null") {
+    var span = document.createElement("input");
+    span.type = "text"; span.value = "null"; span.disabled = true;
+    span.style.cssText = common + "color:#aaa;";
+    return span;
   }
+  var inp = document.createElement("input");
+  inp.style.cssText = common;
+  if (field.type === "number") {
+    inp.type = "number";
+    inp.value = field.value === undefined || field.value === null ? "" : field.value;
+    inp.addEventListener("input", function () {
+      var v = inp.value === "" ? null : Number(inp.value);
+      formFields[index].value = v;
+      rebuildBodyFromForm();
+    });
+  } else if (field.type === "date") {
+    inp.type = "date";
+    inp.value = field.value || "";
+    inp.addEventListener("input", function () {
+      formFields[index].value = inp.value;
+      rebuildBodyFromForm();
+    });
+  } else {
+    inp.type = "text";
+    inp.value = field.value === undefined || field.value === null ? "" : String(field.value);
+    inp.addEventListener("input", function () {
+      formFields[index].value = inp.value;
+      rebuildBodyFromForm();
+    });
+  }
+  return inp;
+}
+
+function defaultValueForType(t) {
+  if (t === "string") return "";
+  if (t === "number") return 0;
+  if (t === "boolean") return false;
+  if (t === "date") return "";
+  if (t === "null") return null;
   return "";
 }
 
-function rebuildSubmitBody() {
-  var bodyEl = document.getElementById("submitBody");
-  var shape = document.getElementById("submitBodyShape").value;
-  if (shape !== "custom") {
-    bodyEl.value = buildSubmitBody();
+function fieldsToObject() {
+  var obj = {};
+  for (var i = 0; i < formFields.length; i++) {
+    var f = formFields[i];
+    if (!f.enabled) continue;
+    if (!f.key) continue;
+    var v = f.value;
+    if (f.type === "null") v = null;
+    if (f.type === "number" && (v === "" || v === undefined)) v = null;
+    obj[f.key] = v;
   }
+  return obj;
 }
 
-function applyPreset() {
-  var preset = document.getElementById("submitPreset").value;
-  if (preset === "custom") return;
-  var parts = preset.split("|");
-  var method = parts[0];
-  var path = parts[1];
-  document.querySelector('input[name="submitMethod"][value="' + method + '"]').checked = true;
-  document.getElementById("submitUrl").value = "https://starlink.com" + path;
+function rebuildBodyFromForm() {
+  var wrap = document.getElementById("submitWrap").value;
+  var bodyEl = document.getElementById("submitBody");
+  if (wrap === "raw") return; // user is editing
+  if (wrap === "empty") {
+    bodyEl.value = "";
+    return;
+  }
+  var obj = fieldsToObject();
+  var out;
+  if (wrap === "content") out = { content: [obj] };
+  else if (wrap === "contentObj") out = { content: obj };
+  else out = obj;
+  bodyEl.value = JSON.stringify(out, null, 2);
 }
 
 function initSubmit() {
-  var preset = document.getElementById("submitPreset");
-  var shape = document.getElementById("submitBodyShape");
-  var verifEl = document.getElementById("submitVerifState");
-  var restrictedEl = document.getElementById("submitIsRestricted");
-  var bodyEl = document.getElementById("submitBody");
-  var responseEl = document.getElementById("submitResponse");
-
-  preset.addEventListener("change", function () {
-    applyPreset();
+  document.getElementById("submitTemplate").addEventListener("change", function (e) {
+    loadTemplate(e.target.value);
   });
-  shape.addEventListener("change", rebuildSubmitBody);
-  verifEl.addEventListener("input", rebuildSubmitBody);
-  restrictedEl.addEventListener("change", rebuildSubmitBody);
+
+  document.getElementById("submitWrap").addEventListener("change", rebuildBodyFromForm);
+
+  document.getElementById("addFieldBtn").addEventListener("click", function () {
+    formFields.push({ key: "newField", type: "string", value: "", enabled: true });
+    renderFormFields();
+    rebuildBodyFromForm();
+  });
+
+  document.getElementById("resetFormBtn").addEventListener("click", function () {
+    if (!confirm("Vider le formulaire ?")) return;
+    formFields = [];
+    renderFormFields();
+    rebuildBodyFromForm();
+  });
 
   document.getElementById("rebuildBodyBtn").addEventListener("click", function () {
-    bodyEl.value = buildSubmitBody();
+    var wrapEl = document.getElementById("submitWrap");
+    if (wrapEl.value === "raw") wrapEl.value = "none";
+    rebuildBodyFromForm();
     showToast("Body reconstruit");
+  });
+
+  document.getElementById("copyBodyBtn").addEventListener("click", function () {
+    var v = document.getElementById("submitBody").value;
+    if (!v) { showToast("Body vide"); return; }
+    copyToClipboard(v, "Body copie");
+  });
+
+  document.getElementById("copyResponseBtn").addEventListener("click", function () {
+    copyToClipboard(document.getElementById("submitResponse").textContent, "Reponse copiee");
+  });
+
+  document.getElementById("copyCurlBtn").addEventListener("click", function () {
+    var url = document.getElementById("submitUrl").value.trim();
+    var method = document.querySelector('input[name="submitMethod"]:checked').value;
+    var body = document.getElementById("submitBody").value;
+    var cmd = "curl -X " + method + " '" + url + "' \\\n";
+    cmd += "  -H 'Content-Type: application/json' \\\n";
+    cmd += "  -H 'Accept: application/json' \\\n";
+    cmd += "  -H 'Origin: https://starlink.com' \\\n";
+    cmd += "  -H 'Referer: https://starlink.com/account/settings' \\\n";
+    cmd += "  -b 'Starlink.Com.Sso=...; Starlink.Com.Access.V1=...'";
+    if (body && body.length > 0) {
+      cmd += " \\\n  --data " + JSON.stringify(body);
+    } else {
+      cmd += " \\\n  -H 'Content-Length: 0'";
+    }
+    copyToClipboard(cmd, "cURL copie");
   });
 
   document.getElementById("submitBtn").addEventListener("click", function () {
     var url = document.getElementById("submitUrl").value.trim();
     var method = document.querySelector('input[name="submitMethod"]:checked').value;
-    var body = bodyEl.value;
+    var body = document.getElementById("submitBody").value;
+    var wrap = document.getElementById("submitWrap").value;
     if (!url) { showToast("URL requise"); return; }
 
+    var responseEl = document.getElementById("submitResponse");
     responseEl.style.color = "#aaa";
-    responseEl.textContent = "Envoi en cours...\n" + method + " " + url + "\n\n" + body;
+    responseEl.textContent = "Envoi en cours...\n" + method + " " + url + "\n\n" + (body || "(pas de body)");
 
     browserAPI.runtime.sendMessage({
       type: "SUBMIT",
       url: url,
       method: method,
-      body: body
+      body: wrap === "empty" ? "" : body
     }, function (resp) {
       if (!resp) {
         responseEl.style.color = "#e94560";
@@ -596,8 +846,9 @@ function initSubmit() {
         return;
       }
       var r = resp.result;
-      var cls = r.status >= 200 && r.status < 300 ? "#4CAF50" : (r.status >= 400 ? "#e94560" : "#FF9800");
-      responseEl.style.color = cls;
+      var color = r.status >= 200 && r.status < 300 ? "#4CAF50"
+                : r.status >= 400 ? "#e94560" : "#FF9800";
+      responseEl.style.color = color;
       var out = "Status: " + r.status + " " + (r.statusText || "") + "\n";
       out += "Content-Type: " + (r.contentType || "-") + "\n";
       out += "Duree: " + r.duration + "ms\n\n";
@@ -608,24 +859,8 @@ function initSubmit() {
     });
   });
 
-  document.getElementById("copyResponseBtn").addEventListener("click", function () {
-    copyToClipboard(responseEl.textContent, "Reponse copiee");
-  });
-
-  document.getElementById("copyCurlBtn").addEventListener("click", function () {
-    var url = document.getElementById("submitUrl").value.trim();
-    var method = document.querySelector('input[name="submitMethod"]:checked').value;
-    var body = bodyEl.value;
-    var cmd = "curl -X " + method + " '" + url + "' \\\n";
-    cmd += "  -H 'Content-Type: application/json' \\\n";
-    cmd += "  -H 'Accept: application/json' \\\n";
-    cmd += "  -b 'Starlink.Com.Sso=...; Starlink.Com.Access.V1=...' \\\n";
-    cmd += "  --data " + JSON.stringify(body);
-    copyToClipboard(cmd, "cURL copie");
-  });
-
-  // initial body fill
-  rebuildSubmitBody();
+  // bootstrap avec le premier template
+  loadTemplate("obligations-flat");
 }
 initSubmit();
 

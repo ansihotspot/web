@@ -376,27 +376,27 @@
     </div>
   </div>
 
-  <!-- =================== SOUMISSION POST/PUT/PATCH =================== -->
+  <!-- =================== SOUMISSION POST/PUT/PATCH (FORMULAIRE) =================== -->
   <div class="card" style="margin-top:16px;">
     <h2>
-      Soumettre la modification (POST / PUT / PATCH)
+      Envoyer une requete (formulaire)
       <div class="actions">
-        <button id="rebuildBodyBtn">Reconstruire le body</button>
+        <button id="addFieldBtn">+ Champ</button>
+        <button id="resetFormBtn" class="danger">Reset</button>
       </div>
     </h2>
 
     <div class="scan-form" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <!-- COLONNE GAUCHE: parametres + formulaire -->
       <div>
-        <label>Endpoint preset</label>
-        <select id="submitPreset" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
-          <option value="POST|/api/accounts/v1/accounts/customer-details/travel-obligations/global">POST  travel-obligations/global</option>
-          <option value="PUT|/api/accounts/v1/accounts/customer-details">PUT   customer-details</option>
-          <option value="POST|/api/accounts/v1/accounts/customer-details">POST  customer-details</option>
-          <option value="POST|/api/accounts/v1/accounts/customer-details/obligations">POST  customer-details/obligations</option>
-          <option value="PUT|/api/accounts/v1/accounts/customer-details/obligations">PUT   customer-details/obligations</option>
-          <option value="PATCH|/api/accounts/v1/accounts/customer-details/obligations">PATCH customer-details/obligations</option>
-          <option value="POST|/api/accounts/v1/accounts/customer-details/verification">POST  customer-details/verification</option>
-          <option value="custom">[ Personnalise... ]</option>
+        <label>Template</label>
+        <select id="submitTemplate" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
+          <option value="travel-obligations">POST  travel-obligations/global (action, body vide)</option>
+          <option value="obligations-flat">POST  obligations (verificationState + isRestricted)</option>
+          <option value="customer-details-put">PUT   customer-details (identite complete)</option>
+          <option value="customer-details-post">POST  customer-details (identite complete)</option>
+          <option value="verification">POST  customer-details/verification</option>
+          <option value="custom">[ Custom URL ]</option>
         </select>
 
         <label>Methode</label>
@@ -406,44 +406,41 @@
           <label class="method-chip"><input type="radio" name="submitMethod" value="PATCH"> PATCH</label>
         </div>
 
-        <label>URL complete (editable)</label>
+        <label>URL complete</label>
         <input id="submitUrl" type="text" value="https://starlink.com/api/accounts/v1/accounts/customer-details/travel-obligations/global" />
 
-        <div style="display:flex;gap:10px;margin-top:12px;">
-          <div style="flex:1;">
-            <label style="margin-top:0;">verificationState</label>
-            <input id="submitVerifState" type="text" value="NotRequired" />
-          </div>
-          <div style="flex:1;">
-            <label style="margin-top:0;">isRestricted</label>
-            <select id="submitIsRestricted" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px 10px;font-family:'SF Mono','Consolas',monospace;font-size:12px;">
-              <option value="false" selected>false</option>
-              <option value="true">true</option>
-            </select>
-          </div>
-        </div>
-
-        <label>Format du body</label>
-        <select id="submitBodyShape" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
-          <option value="empty">empty  -  pas de body (endpoint d'action)</option>
-          <option value="flat" selected>flat  -  {verificationState, isRestricted}</option>
-          <option value="wrappedContent">wrapped  -  {content:[{verificationState, isRestricted}]}</option>
-          <option value="wrappedItem">wrapped item  -  {verificationState, isRestricted, configurationId:-62}</option>
-          <option value="custom">custom (j'edite a la main)</option>
+        <label>Enveloppe du body</label>
+        <select id="submitWrap" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
+          <option value="none" selected>aucune  -  {champs...}</option>
+          <option value="content">content  -  {content: [{champs...}]}</option>
+          <option value="contentObj">content objet  -  {content: {champs...}}</option>
+          <option value="empty">aucun body (Content-Length: 0)</option>
+          <option value="raw">raw (j'edite le JSON a la main)</option>
         </select>
 
-        <button id="submitBtn" class="primary" style="margin-top:14px;width:100%;">Envoyer</button>
+        <label style="margin-top:14px;">Champs du formulaire</label>
+        <div id="formFields" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;padding:4px;border:1px solid rgba(255,255,255,0.06);border-radius:6px;background:rgba(0,0,0,0.15);"></div>
+
+        <button id="submitBtn" class="primary" style="margin-top:14px;width:100%;">Envoyer la requete</button>
       </div>
 
+      <!-- COLONNE DROITE: body genere + reponse -->
       <div>
-        <label>Body envoye (JSON, editable)</label>
-        <textarea id="submitBody" style="min-height:200px;font-family:'SF Mono','Consolas',monospace;font-size:11px;"></textarea>
+        <label>
+          Body JSON envoye
+          <span style="float:right;font-size:9px;color:#666;text-transform:none;letter-spacing:0;">construit depuis le formulaire (ou editable en mode raw)</span>
+        </label>
+        <textarea id="submitBody" style="min-height:200px;font-family:'SF Mono','Consolas',monospace;font-size:11px;" spellcheck="false"></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button id="copyBodyBtn" class="small-btn">Copier le body</button>
+          <button id="copyCurlBtn" class="small-btn">Copier en cURL</button>
+          <button id="rebuildBodyBtn" class="small-btn">Reconstruire</button>
+        </div>
 
-        <label>Reponse</label>
+        <label>Reponse du serveur</label>
         <div id="submitResponse" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;font-family:'SF Mono','Consolas',monospace;font-size:11px;min-height:120px;max-height:260px;overflow:auto;white-space:pre-wrap;color:#aaa;">En attente d'envoi...</div>
         <div style="display:flex;gap:6px;margin-top:6px;">
           <button id="copyResponseBtn" class="small-btn">Copier la reponse</button>
-          <button id="copyCurlBtn" class="small-btn">Copier en cURL</button>
         </div>
       </div>
     </div>
