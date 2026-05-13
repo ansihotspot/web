@@ -35,8 +35,9 @@ var TEMPLATES = {
       { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
       { key: "identificationNumber", type: "string", value: "", enabled: true, group: "inner",
         hint: "Numero du document (ex: numero de passeport)" },
-      { key: "identificationDocumentType", type: "string", value: "passport", enabled: true, group: "inner",
-        hint: "Type de document: passport, idCard, driverLicense..." },
+      { key: "identificationDocumentType", type: "string", value: "Passport", enabled: true, group: "inner",
+        choices: ["Passport", "NationalIdCard", "DriversLicense", "StudentOrSchoolCard", "ConsularCard", "ResidencePermit", "ElectoralCard", "RefugeeCard"],
+        hint: "Type de document (PascalCase strict, sensible a la casse)" },
       { key: "identificationDocument", type: "file", value: "", enabled: true, group: "inner",
         hint: "Image du document (passeport/CI) - convertie en data:image/jpeg;base64,..." },
       { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
@@ -110,7 +111,8 @@ function loadTemplate(name) {
   formFields = tpl.fields.map(function (f) {
     return {
       key: f.key, type: f.type, value: f.value, enabled: f.enabled,
-      group: f.group || "top", hint: f.hint || null
+      group: f.group || "top", hint: f.hint || null,
+      choices: f.choices || null
     };
   });
   renderFormFields();
@@ -222,6 +224,22 @@ function renderFieldRow(index, field) {
 
 function renderValueInput(index, field) {
   var common = "width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;color:#e4e4e4;padding:4px 6px;font-family:'SF Mono','Consolas',monospace;font-size:11px;outline:none;";
+  // Champs avec une liste de choix imposes
+  if (field.choices && field.choices.length && field.type === "string") {
+    var sel = document.createElement("select");
+    sel.style.cssText = common;
+    field.choices.forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = c; opt.textContent = c;
+      if (String(field.value) === c) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", function () {
+      formFields[index].value = sel.value;
+      rebuildBodyFromForm();
+    });
+    return sel;
+  }
   if (field.type === "boolean") {
     var sel = document.createElement("select");
     sel.style.cssText = common;
