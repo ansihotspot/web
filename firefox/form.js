@@ -29,10 +29,10 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "customerDetails",
     fields: [
+      { key: "configurationId", type: "number", value: -7, enabled: true, group: "top" },
       { key: "requestId", type: "string", value: "", enabled: true, group: "top",
         hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
       { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
-      { key: "configurationId", type: "number", value: -7, enabled: true, group: "inner" },
       { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "inner",
         choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
       { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "inner" },
@@ -56,9 +56,9 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "customerDetails",
     fields: [
+      { key: "configurationId", type: "number", value: -62, enabled: true, group: "top" },
       { key: "requestId", type: "string", value: "", enabled: true, group: "top",
         hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
-      { key: "configurationId", type: "number", value: -62, enabled: true, group: "inner" },
       { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "inner",
         choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
       { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "inner" },
