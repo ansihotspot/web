@@ -1,97 +1,64 @@
-# Starlink Obligations Response Patcher
+# Starlink Form Submitter
 
-Deux builds dans ce repo pour le meme but: intercepter la reponse de
-`/api/accounts/v1/accounts/customer-details/obligations` sur `starlink.com`
-et reecrire uniquement `verificationState` et `isRestricted` sur chaque
-entree de `content[]`. Tout le reste (configuration, jsonSchema, dates,
-accountNumber, etc.) est conserve.
+Extension Firefox (MV2) qui construit et envoie des requetes
+POST/PUT/PATCH sur l'API Starlink avec les cookies de session du
+navigateur. Auto-detecte le numero de compte depuis
+`/api/webagg/v1/referrals/account-info/ACC-...`.
 
-## Builds
+## Installation Firefox
 
-| Build | Cible | Fichier a installer | Source |
-|-------|-------|--------------------|--------|
-| Chrome MV3 | Chrome / Edge / Brave (111+) | `starlink-obligations-modifier.zip` | racine du repo |
-| Firefox MV2 | Firefox 115+ | `starlink-obligations-modifier-firefox.xpi` | dossier `firefox/` |
-
-## Build Firefox (recommande sous Firefox)
-
-Architecture MV2 avec `webRequest.filterResponseData`: l'extension
-intercepte les octets de la reponse au niveau reseau, ce qui contourne
-toute CSP de la page et ne necessite aucune injection de script.
-
-Inclut un **scanner d'endpoints** (bouton dans la popup):
-
-- **Observation passive**: toutes les requetes vers `*.starlink.com/api/*`
-  sont loggees (methode + path + status + nombre de hits). Navigue sur
-  le site, la liste se remplit toute seule.
-- **Scan actif**: pour un (ou plusieurs) path, l'extension envoie
-  GET / POST / PUT / PATCH / DELETE / HEAD / OPTIONS avec les cookies
-  de session et affiche le status retourne par chaque methode. Pour
-  chaque endpoint observe il y a aussi un bouton "Probe methodes" qui
-  fait pareil en un clic.
-- **Bruteforce de chemins**: a partir d'une base path et d'une wordlist
-  editable (defaut: ~150 segments REST generiques + segments Starlink
-  observes), envoie `{base}/{segment}` pour chaque entree avec les
-  methodes choisies. Concurrence reglable (defaut 6 en parallele),
-  filtre 404 actif par defaut, progression en temps reel, export JSON
-  des resultats.
-
-### Installation temporaire
-
-1. Telecharger `starlink-obligations-modifier-firefox.xpi`
+1. Telecharger `starlink-form-submitter-firefox.xpi`
 2. Ouvrir `about:debugging#/runtime/this-firefox`
 3. Cliquer sur **Charger un module complementaire temporaire...**
 4. Selectionner le fichier `.xpi`
 
-### Installation persistante
+L'extension reste active jusqu'au redemarrage de Firefox.
 
-Firefox Developer Edition / Nightly / ESR uniquement: passer
-`xpinstall.signatures.required` a `false` dans `about:config`, puis
-glisser-deposer le `.xpi` sur la fenetre Firefox.
+Pour une installation persistante (Developer Edition / Nightly / ESR):
+passer `xpinstall.signatures.required` a `false` dans `about:config`,
+puis glisser-deposer le `.xpi` sur la fenetre.
 
-### Verification
+## Utilisation
 
-Console du background script (depuis `about:debugging` > Inspecter):
+Cliquer sur l'icone de l'extension - cela ouvre directement la page
+formulaire dans un nouvel onglet.
 
-```
-[OblPatcher] initialized { enabled: true, ... }
-[OblPatcher] background loaded, watching /api/.../obligations
-[OblPatcher] intercepting https://starlink.com/api/.../obligations
-[OblPatcher] patched response { verificationState: "...", isRestricted: ... }
-```
+1. Choisir un **template** (par defaut: `customer-details-put-kyc`)
+2. Le **numero de compte** se remplit tout seul des que tu navigues
+   sur `https://starlink.com/` et que la page declenche
+   `/api/webagg/v1/referrals/account-info/ACC-...` (ex.
+   `ACC-DF-11159739-54631-51`)
+3. L'**ISO timestamp** est en mode auto par defaut (rafraichi a
+   chaque seconde, et regenere a l'envoi). Decoche pour figer une
+   date precise.
+4. Remplir les champs (les fichiers passport/livePortrait sont
+   convertis automatiquement en `data:image/jpeg;base64,...`)
+5. Cliquer **Envoyer la requete** -> la reponse du serveur s'affiche
 
-Un badge "ON" puis un compteur apparait sur l'icone de l'extension a
-chaque reponse patchee.
+## Templates disponibles
 
-## Build Chrome
+- `POST  travel-obligations/global` - endpoint d'action, body vide
+- `POST  obligations` - `{verificationState, isRestricted}`
+- `PUT   customer-details (KYC)` - structure complete avec passeport
+  et portrait en base64, encapsulee dans `{configurationId, requestId,
+  value: JSON.stringify({...})}`
+- `PUT   customer-details (simple)`
+- `POST  customer-details (simple)`
+- `POST  customer-details/verification`
+- `[ Custom URL ]`
 
-Manifest V3 avec content script en world `MAIN` qui hooke `window.fetch`
-et `XMLHttpRequest`.
+## Fichiers
 
-1. Telecharger `starlink-obligations-modifier.zip` et le decompresser
-2. Ouvrir `chrome://extensions/`, activer le mode developpeur
-3. **Charger l'extension non empaquetee**, selectionner le dossier
+- `firefox/manifest.json` - manifest MV2
+- `firefox/background.js` - submit handler + capture du numero de
+  compte depuis le webRequest
+- `firefox/form.html` / `firefox/form.js` - page formulaire
+- `firefox/icons/` - icones
 
-## Utilisation (les deux builds)
+## Endpoint de capture du compte
 
-1. Cliquer sur l'icone de l'extension
-2. Saisir la valeur de `verificationState` (par ex. `NotRequired` ou
-   `Completed` pour bypasser l'ecran de verification)
-3. Cocher / decocher `isRestricted`
-4. Activer la modification, puis recharger l'onglet starlink.com
+`GET https://*.starlink.com/api/webagg/v1/referrals/account-info/{ACC-XXX-XXXXXXXX-XXXXX-XX}`
 
-Defauts: `verificationState = "Required"`, `isRestricted = false`.
-
-## Endpoint cible
-
-`GET https://*.starlink.com/api/accounts/v1/accounts/customer-details/obligations`
-
-## Arborescence
-
-- `manifest.json` + `popup.{html,js}` + `content.js` + `inject.js` -
-  build Chrome MV3 (racine)
-- `firefox/manifest.json` + `firefox/background.js` +
-  `firefox/popup.{html,js}` - build Firefox MV2
-- `icons/` - icones partagees
-- `starlink-obligations-modifier.zip` - artefact Chrome
-- `starlink-obligations-modifier-firefox.xpi` - artefact Firefox
+Le segment d'URL apres `account-info/` est extrait par regex
+`ACC[A-Z0-9-]+` (couvre les deux formats: `ACC-7483509-23151-13` et
+`ACC-DF-11159739-54631-51`).

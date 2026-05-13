@@ -1,17 +1,16 @@
 {
   "manifest_version": 2,
-  "name": "Starlink Obligations Patcher",
-  "version": "2.0.0",
-  "description": "Modifie la reponse de /api/accounts/v1/accounts/customer-details/obligations sur starlink.com (verificationState + isRestricted).",
+  "name": "Starlink Form Submitter",
+  "version": "3.0.0",
+  "description": "Construit et envoie des requetes POST/PUT/PATCH sur l'API Starlink avec les cookies de session. Auto-detecte le numero de compte depuis /api/webagg/v1/referrals/account-info/...",
   "browser_specific_settings": {
     "gecko": {
-      "id": "starlink-obligations-patcher@local",
+      "id": "starlink-form-submitter@local",
       "strict_min_version": "115.0"
     }
   },
   "permissions": [
     "webRequest",
-    "webRequestBlocking",
     "storage",
     "tabs",
     "https://starlink.com/*",
@@ -22,13 +21,12 @@
     "persistent": true
   },
   "browser_action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Obligations Patcher"
+    "default_title": "Starlink Form Submitter"
   },
   "icons": {
     "16": "icons/icon16.png",
