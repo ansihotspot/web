@@ -14,8 +14,10 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details/obligations",
     wrap: "none",
     fields: [
-      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "top" },
+      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "top",
+        choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
       { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
+      { key: "isValid", type: "boolean", value: true, enabled: true, group: "top" },
       { key: "configurationId", type: "number", value: -7, enabled: false, group: "top" },
       { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
       { key: "verificationDeadlineDate", type: "date", value: "", enabled: false, group: "top" },
@@ -76,6 +78,10 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "none",
     fields: [
+      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "top",
+        choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
+      { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
+      { key: "isValid", type: "boolean", value: true, enabled: true, group: "top" },
       { key: "fullLegalName", type: "string", value: "", enabled: true, group: "top" },
       { key: "nationality", type: "string", value: "FR", enabled: true, group: "top" },
       { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "top" },
@@ -87,6 +93,10 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "none",
     fields: [
+      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "top",
+        choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
+      { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
+      { key: "isValid", type: "boolean", value: true, enabled: true, group: "top" },
       { key: "fullLegalName", type: "string", value: "", enabled: true, group: "top" },
       { key: "nationality", type: "string", value: "FR", enabled: true, group: "top" },
       { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "top" },
@@ -98,8 +108,10 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details/verification",
     wrap: "none",
     fields: [
-      { key: "verificationState", type: "string", value: "Completed", enabled: true, group: "top" },
+      { key: "verificationState", type: "string", value: "Completed", enabled: true, group: "top",
+        choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
       { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
+      { key: "isValid", type: "boolean", value: true, enabled: true, group: "top" },
       { key: "configurationId", type: "number", value: -7, enabled: false, group: "top" }
     ]
   },
