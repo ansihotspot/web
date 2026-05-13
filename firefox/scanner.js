@@ -974,8 +974,8 @@ function initSubmit() {
     });
   });
 
-  // bootstrap avec le premier template
-  loadTemplate("obligations-flat");
+  // bootstrap avec le template KYC (par defaut selectionne dans le HTML)
+  loadTemplate("customer-details-put-kyc");
 }
 initSubmit();
 

@@ -393,8 +393,9 @@
         <select id="submitTemplate" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;">
           <option value="travel-obligations">POST  travel-obligations/global (action, body vide)</option>
           <option value="obligations-flat">POST  obligations (verificationState + isRestricted)</option>
-          <option value="customer-details-put">PUT   customer-details (identite complete)</option>
-          <option value="customer-details-post">POST  customer-details (identite complete)</option>
+          <option value="customer-details-put-kyc" selected>PUT   customer-details (KYC + upload passeport/portrait)</option>
+          <option value="customer-details-put">PUT   customer-details (identite simple)</option>
+          <option value="customer-details-post">POST  customer-details (identite simple)</option>
           <option value="verification">POST  customer-details/verification</option>
           <option value="custom">[ Custom URL ]</option>
         </select>
