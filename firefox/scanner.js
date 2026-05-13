@@ -520,7 +520,7 @@ var TEMPLATES = {
     fields: [
       { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "top" },
       { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
-      { key: "configurationId", type: "number", value: -62, enabled: false, group: "top" },
+      { key: "configurationId", type: "number", value: -7, enabled: false, group: "top" },
       { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
       { key: "verificationDeadlineDate", type: "date", value: "", enabled: false, group: "top" },
       { key: "verificationExpiryDate", type: "date", value: "", enabled: false, group: "top" }
@@ -531,7 +531,7 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "customerDetails",
     fields: [
-      { key: "configurationId", type: "number", value: -62, enabled: true, group: "top" },
+      { key: "configurationId", type: "number", value: -7, enabled: true, group: "top" },
       { key: "requestId", type: "string", value: "", enabled: true, group: "top",
         hint: "Format vu: ACC-XXXX-XXXX-XX<ISOTimestamp>. Utilise le bouton Generer requestId." },
       { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
@@ -573,7 +573,7 @@ var TEMPLATES = {
     fields: [
       { key: "verificationState", type: "string", value: "Completed", enabled: true, group: "top" },
       { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
-      { key: "configurationId", type: "number", value: -62, enabled: false, group: "top" }
+      { key: "configurationId", type: "number", value: -7, enabled: false, group: "top" }
     ]
   },
   "custom": {
@@ -848,27 +848,43 @@ function initSubmit() {
 
   document.getElementById("submitWrap").addEventListener("change", rebuildBodyFromForm);
 
-  // Account number persistance + auto-fill from observed requests
+  // Account number + ISO timestamp helpers
   var accEl = document.getElementById("accountNumber");
-  browserAPI.storage.local.get(["accountNumber"], function (s) {
-    if (s.accountNumber) accEl.value = s.accountNumber;
-    // tentative d'auto-detection si vide
-    if (!accEl.value) {
-      var keys = Object.keys(observedCache || {});
-      for (var k = 0; k < keys.length; k++) {
-        var url = (observedCache[keys[k]] && observedCache[keys[k]].sampleUrl) || "";
-        var m = url.match(/(ACC-\d+-\d+-\d+)/);
-        if (m) { accEl.value = m[1]; browserAPI.storage.local.set({ accountNumber: m[1] }); break; }
-      }
-    }
-  });
-  accEl.addEventListener("input", function () {
-    browserAPI.storage.local.set({ accountNumber: accEl.value });
-  });
+  var isoEl = document.getElementById("isoTimestamp");
+  var autoIsoEl = document.getElementById("autoIso");
+  var isoBadge = document.getElementById("isoNowBadge");
 
-  document.getElementById("genRequestIdBtn").addEventListener("click", function () {
+  function nowIsoLocalInput() {
+    // datetime-local accepts YYYY-MM-DDTHH:MM:SS.sss
+    var d = new Date();
+    var pad = function (n, l) { l = l || 2; var s = String(n); while (s.length < l) s = "0" + s; return s; };
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate())
+      + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds())
+      + "." + pad(d.getMilliseconds(), 3);
+  }
+  function currentIsoZ() {
+    if (autoIsoEl.checked) return new Date().toISOString();
+    if (!isoEl.value) return new Date().toISOString();
+    var d = new Date(isoEl.value); // local time interpreted, converted to UTC
+    return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+  }
+
+  isoEl.value = nowIsoLocalInput();
+  // refresh "auto" timestamp every second while checkbox is checked
+  setInterval(function () {
+    if (autoIsoEl.checked) {
+      isoEl.value = nowIsoLocalInput();
+      isoBadge.textContent = "auto";
+      isoBadge.style.color = "#4CAF50";
+    } else {
+      isoBadge.textContent = "fige";
+      isoBadge.style.color = "#FF9800";
+    }
+  }, 1000);
+
+  function applyRequestId() {
     var acc = (accEl.value || "ACC-0000000-00000-00").trim();
-    var iso = new Date().toISOString();
+    var iso = currentIsoZ();
     var rid = acc + iso;
     var idx = -1;
     for (var i = 0; i < formFields.length; i++) {
@@ -882,6 +898,45 @@ function initSubmit() {
     }
     renderFormFields();
     rebuildBodyFromForm();
+    return rid;
+  }
+
+  browserAPI.storage.local.get(["accountNumber"], function (s) {
+    if (s.accountNumber) accEl.value = s.accountNumber;
+    if (!accEl.value) {
+      var keys = Object.keys(observedCache || {});
+      for (var k = 0; k < keys.length; k++) {
+        var url = (observedCache[keys[k]] && observedCache[keys[k]].sampleUrl) || "";
+        var m = url.match(/(ACC-\d+-\d+-\d+)/);
+        if (m) { accEl.value = m[1]; browserAPI.storage.local.set({ accountNumber: m[1] }); break; }
+      }
+    }
+    if (accEl.value) applyRequestId();
+  });
+
+  accEl.addEventListener("input", function () {
+    browserAPI.storage.local.set({ accountNumber: accEl.value });
+    applyRequestId();
+  });
+
+  isoEl.addEventListener("input", function () {
+    autoIsoEl.checked = false;
+    applyRequestId();
+  });
+
+  autoIsoEl.addEventListener("change", function () {
+    if (autoIsoEl.checked) isoEl.value = nowIsoLocalInput();
+    applyRequestId();
+  });
+
+  isoBadge.addEventListener("click", function () {
+    autoIsoEl.checked = !autoIsoEl.checked;
+    if (autoIsoEl.checked) isoEl.value = nowIsoLocalInput();
+    applyRequestId();
+  });
+
+  document.getElementById("genRequestIdBtn").addEventListener("click", function () {
+    var rid = applyRequestId();
     showToast("requestId = " + rid);
   });
 
@@ -934,6 +989,10 @@ function initSubmit() {
   });
 
   document.getElementById("submitBtn").addEventListener("click", function () {
+    // si auto ISO, regenere requestId juste avant l'envoi
+    if (document.getElementById("autoIso").checked) {
+      applyRequestId();
+    }
     var url = document.getElementById("submitUrl").value.trim();
     var method = document.querySelector('input[name="submitMethod"]:checked').value;
     var body = document.getElementById("submitBody").value;
