@@ -267,6 +267,89 @@ async function scanPath(path, methods, body) {
   return results;
 }
 
+// === BRUTEFORCE DE CHEMINS ===
+//
+// Pour chaque segment du wordlist on construit `{basePath}/{segment}`,
+// on probe les methodes demandees et on stream les resultats au popup.
+
+var bruteforceState = { running: false, cancel: false };
+
+async function runBruteforce(opts) {
+  if (bruteforceState.running) return { ok: false, error: "deja en cours" };
+  bruteforceState.running = true;
+  bruteforceState.cancel = false;
+
+  var basePath = (opts.basePath || "").replace(/\/+$/, "");
+  var wordlist = (opts.wordlist || []).filter(function (w) { return w && w.length > 0; });
+  var methods = opts.methods && opts.methods.length ? opts.methods : ["GET"];
+  var concurrency = Math.max(1, Math.min(20, opts.concurrency || 5));
+  var hideNotFound = opts.hideNotFound !== false;
+  var body = opts.body || null;
+
+  var total = wordlist.length * methods.length;
+  var done = 0;
+  var found = 0;
+
+  browserAPI.runtime.sendMessage({
+    type: "BRUTEFORCE_START",
+    total: total
+  }).catch(function () {});
+
+  // Construit les taches
+  var tasks = [];
+  for (var i = 0; i < wordlist.length; i++) {
+    var seg = wordlist[i].trim();
+    if (!seg) continue;
+    var fullPath = basePath + (seg.indexOf("/") === 0 ? "" : "/") + seg;
+    for (var j = 0; j < methods.length; j++) {
+      tasks.push({ path: fullPath, method: methods[j], segment: seg });
+    }
+  }
+
+  var idx = 0;
+  async function worker() {
+    while (idx < tasks.length && !bruteforceState.cancel) {
+      var myIdx = idx++;
+      var task = tasks[myIdx];
+      var url = "https://starlink.com" + task.path;
+      var r = await probeMethod(url, task.method, body);
+      done++;
+      var status = r.ok ? r.status : 0;
+      var isFound = r.ok && status !== 404 && status !== 0;
+      if (isFound) found++;
+      if (!hideNotFound || isFound) {
+        browserAPI.runtime.sendMessage({
+          type: "BRUTEFORCE_HIT",
+          segment: task.segment,
+          path: task.path,
+          method: task.method,
+          status: status,
+          statusText: r.statusText || r.error || "",
+          contentType: r.contentType || null,
+          allow: r.allow || null,
+          contentLength: r.contentLength || null
+        }).catch(function () {});
+      }
+      browserAPI.runtime.sendMessage({
+        type: "BRUTEFORCE_PROGRESS",
+        done: done, total: total, found: found
+      }).catch(function () {});
+    }
+  }
+
+  var workers = [];
+  for (var w = 0; w < concurrency; w++) workers.push(worker());
+  await Promise.all(workers);
+
+  bruteforceState.running = false;
+  browserAPI.runtime.sendMessage({
+    type: "BRUTEFORCE_DONE",
+    done: done, total: total, found: found, canceled: bruteforceState.cancel
+  }).catch(function () {});
+
+  return { ok: true, done: done, total: total, found: found };
+}
+
 // === MESSAGES ===
 
 browserAPI.runtime.onMessage.addListener(function (message, sender, sendResponse) {
@@ -339,6 +422,19 @@ browserAPI.runtime.onMessage.addListener(function (message, sender, sendResponse
 
   if (message.type === "OPEN_SCANNER") {
     browserAPI.tabs.create({ url: browserAPI.runtime.getURL("scanner.html") });
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  if (message.type === "BRUTEFORCE") {
+    runBruteforce(message.options || {})
+      .then(function (r) { sendResponse(r); })
+      .catch(function (e) { sendResponse({ ok: false, error: e.message }); });
+    return true;
+  }
+
+  if (message.type === "BRUTEFORCE_CANCEL") {
+    bruteforceState.cancel = true;
     sendResponse({ ok: true });
     return true;
   }

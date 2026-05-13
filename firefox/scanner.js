@@ -256,13 +256,177 @@ function renderResults(batch) {
   scanCountEl.textContent = probeCount;
 }
 
+// === BRUTEFORCE ===
+
+var bruteResults = [];
+
+function initBruteforce() {
+  var ta = document.getElementById("bruteWordlist");
+  var count = document.getElementById("bruteWordlistCount");
+  if (ta && window.DEFAULT_WORDLIST) {
+    ta.value = window.DEFAULT_WORDLIST.join("\n");
+  }
+  updateWordlistCount();
+  ta.addEventListener("input", updateWordlistCount);
+
+  document.getElementById("resetWordlistBtn").addEventListener("click", function () {
+    if (window.DEFAULT_WORDLIST) {
+      ta.value = window.DEFAULT_WORDLIST.join("\n");
+      updateWordlistCount();
+      showToast("Wordlist par defaut restauree");
+    }
+  });
+
+  document.getElementById("runBruteBtn").addEventListener("click", runBruteforce);
+  document.getElementById("cancelBruteBtn").addEventListener("click", cancelBruteforce);
+  document.getElementById("exportBruteBtn").addEventListener("click", exportBruteforce);
+}
+
+function updateWordlistCount() {
+  var ta = document.getElementById("bruteWordlist");
+  var count = document.getElementById("bruteWordlistCount");
+  if (!ta || !count) return;
+  var n = ta.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean).length;
+  count.textContent = n;
+}
+
+function getBruteMethods() {
+  var checks = document.querySelectorAll("#bruteMethodsGrid input[type=checkbox]");
+  var out = [];
+  for (var i = 0; i < checks.length; i++) {
+    if (checks[i].checked) out.push(checks[i].value);
+  }
+  return out;
+}
+
+function runBruteforce() {
+  var base = document.getElementById("bruteBase").value.trim();
+  if (!base) { showToast("Base path requise"); return; }
+  var wordlist = document.getElementById("bruteWordlist").value
+    .split("\n")
+    .map(function (s) { return s.trim(); })
+    .filter(Boolean);
+  if (wordlist.length === 0) { showToast("Wordlist vide"); return; }
+
+  var methods = getBruteMethods();
+  if (methods.length === 0) { showToast("Aucune methode"); return; }
+
+  var concurrency = parseInt(document.getElementById("bruteConcurrency").value, 10) || 6;
+  var hideNotFound = document.getElementById("hideNotFound").checked;
+  var body = (document.getElementById("bruteBody").value || "").trim() || null;
+
+  bruteResults = [];
+  document.querySelector("#bruteResultsTable tbody").innerHTML = "";
+  document.getElementById("bruteResultsEmpty").style.display = "none";
+  document.getElementById("bruteProgress").style.display = "block";
+  document.getElementById("bruteProgressText").textContent = "0 / " + (wordlist.length * methods.length);
+  document.getElementById("bruteFoundCount").textContent = "0";
+  document.getElementById("bruteProgressBar").style.width = "0%";
+  document.getElementById("runBruteBtn").disabled = true;
+  document.getElementById("runBruteBtn").textContent = "En cours...";
+  document.getElementById("cancelBruteBtn").style.display = "inline-block";
+
+  browserAPI.runtime.sendMessage({
+    type: "BRUTEFORCE",
+    options: {
+      basePath: base,
+      wordlist: wordlist,
+      methods: methods,
+      concurrency: concurrency,
+      hideNotFound: hideNotFound,
+      body: body
+    }
+  }, function (resp) {
+    // resolved when bruteforce ends
+  });
+}
+
+function cancelBruteforce() {
+  browserAPI.runtime.sendMessage({ type: "BRUTEFORCE_CANCEL" });
+}
+
+function appendBruteHit(msg) {
+  bruteResults.push(msg);
+  document.getElementById("bruteResultsEmpty").style.display = "none";
+  var tbody = document.querySelector("#bruteResultsTable tbody");
+  var tr = document.createElement("tr");
+
+  var tdM = document.createElement("td");
+  tdM.innerHTML = '<span class="method ' + msg.method + '">' + msg.method + '</span>';
+  tr.appendChild(tdM);
+
+  var tdSeg = document.createElement("td");
+  tdSeg.className = "path";
+  tdSeg.textContent = msg.segment;
+  tr.appendChild(tdSeg);
+
+  var tdP = document.createElement("td");
+  tdP.className = "path";
+  tdP.textContent = msg.path;
+  tr.appendChild(tdP);
+
+  var tdS = document.createElement("td");
+  if (msg.status > 0) {
+    tdS.innerHTML = '<span class="status ' + statusClass(String(msg.status)) + '">' + msg.status + ' ' + (msg.statusText || "") + '</span>';
+  } else {
+    tdS.innerHTML = '<span class="status serr">ERR</span>';
+  }
+  tr.appendChild(tdS);
+
+  var tdT = document.createElement("td");
+  tdT.textContent = msg.contentType ? msg.contentType.split(";")[0] : "-";
+  tr.appendChild(tdT);
+
+  var tdA = document.createElement("td");
+  tdA.textContent = msg.allow || "-";
+  tr.appendChild(tdA);
+
+  tbody.appendChild(tr);
+}
+
+function exportBruteforce() {
+  if (bruteResults.length === 0) {
+    showToast("Aucun resultat a exporter");
+    return;
+  }
+  var data = JSON.stringify(bruteResults, null, 2);
+  var blob = new Blob([data], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "starlink-bruteforce-" + Date.now() + ".json";
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  showToast("Export OK (" + bruteResults.length + " hits)");
+}
+
 function listenForUpdates() {
   browserAPI.runtime.onMessage.addListener(function (message) {
-    if (message && message.type === "OBSERVED_UPDATED") {
-      loadObserved();
+    if (!message || !message.type) return;
+    if (message.type === "OBSERVED_UPDATED") loadObserved();
+
+    if (message.type === "BRUTEFORCE_START") {
+      // noop
+    }
+    if (message.type === "BRUTEFORCE_HIT") {
+      appendBruteHit(message);
+    }
+    if (message.type === "BRUTEFORCE_PROGRESS") {
+      document.getElementById("bruteProgressText").textContent = message.done + " / " + message.total;
+      document.getElementById("bruteFoundCount").textContent = message.found;
+      var pct = message.total > 0 ? (message.done / message.total * 100) : 0;
+      document.getElementById("bruteProgressBar").style.width = pct + "%";
+    }
+    if (message.type === "BRUTEFORCE_DONE") {
+      document.getElementById("runBruteBtn").disabled = false;
+      document.getElementById("runBruteBtn").textContent = "Lancer le bruteforce";
+      document.getElementById("cancelBruteBtn").style.display = "none";
+      showToast(message.canceled ? "Bruteforce annule" : "Bruteforce termine - " + message.found + " hits");
     }
   });
 }
+
+initBruteforce();
 
 function showToast(text) {
   var t = document.getElementById("toast");

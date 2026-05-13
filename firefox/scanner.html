@@ -263,7 +263,7 @@
       </div>
 
       <h2 style="margin-top:18px;">Resultats</h2>
-      <div class="scroll-area" style="max-height:360px;">
+      <div class="scroll-area" style="max-height:240px;">
         <table id="resultsTable">
           <thead>
             <tr>
@@ -281,8 +281,90 @@
     </div>
   </div>
 
+  <div class="card" style="margin-top:16px;">
+    <h2>
+      Bruteforce de chemins
+      <div class="actions">
+        <button id="resetWordlistBtn">Wordlist par defaut</button>
+        <button id="exportBruteBtn">Exporter</button>
+      </div>
+    </h2>
+    <div class="scan-form" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div>
+        <label>Base path (le segment du wordlist est ajoute apres)</label>
+        <input id="bruteBase" type="text" value="/api/accounts/v1/accounts/customer-details" />
+
+        <label>Methodes (1-2 max recommande pour la vitesse)</label>
+        <div class="methods-grid" id="bruteMethodsGrid">
+          <label class="method-chip"><input type="checkbox" value="GET" checked> GET</label>
+          <label class="method-chip"><input type="checkbox" value="HEAD"> HEAD</label>
+          <label class="method-chip"><input type="checkbox" value="POST"> POST</label>
+          <label class="method-chip"><input type="checkbox" value="PUT"> PUT</label>
+          <label class="method-chip"><input type="checkbox" value="PATCH"> PATCH</label>
+          <label class="method-chip"><input type="checkbox" value="DELETE"> DELETE</label>
+          <label class="method-chip"><input type="checkbox" value="OPTIONS"> OPTIONS</label>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;">
+          <label style="margin:0;flex:1;">
+            Concurrence
+            <input id="bruteConcurrency" type="number" min="1" max="20" value="6" style="width:60px;margin-left:6px;" />
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:11px;text-transform:none;">
+            <input id="hideNotFound" type="checkbox" checked /> Cacher 404
+          </label>
+        </div>
+
+        <label>Corps JSON pour POST/PUT/PATCH (optionnel)</label>
+        <input id="bruteBody" type="text" placeholder='{}' value="{}" />
+
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button id="runBruteBtn" class="primary" style="flex:1;">Lancer le bruteforce</button>
+          <button id="cancelBruteBtn" class="danger" style="display:none;">Annuler</button>
+        </div>
+
+        <div id="bruteProgress" style="display:none;margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:4px;">
+            <span id="bruteProgressText">0 / 0</span>
+            <span><span id="bruteFoundCount">0</span> trouves</span>
+          </div>
+          <div style="background:rgba(0,0,0,0.3);border-radius:4px;height:8px;overflow:hidden;">
+            <div id="bruteProgressBar" style="background:linear-gradient(90deg,#00d4ff,#2da44e);height:100%;width:0;transition:width 0.2s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label>Wordlist - un segment par ligne</label>
+        <textarea id="bruteWordlist" style="min-height:240px;"></textarea>
+        <div style="font-size:10px;color:#666;margin-top:4px;">
+          <span id="bruteWordlistCount">0</span> segments
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:18px;">Resultats bruteforce</h2>
+    <div class="scroll-area" style="max-height:400px;">
+      <table id="bruteResultsTable">
+        <thead>
+          <tr>
+            <th>Methode</th>
+            <th>Segment</th>
+            <th>Path complet</th>
+            <th>Status</th>
+            <th>Type</th>
+            <th>Allow</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="bruteResultsEmpty" class="empty">Lance le bruteforce pour voir les decouvertes ici.</div>
+    </div>
+  </div>
+
   <div class="toast" id="toast">OK</div>
 
+  <script src="wordlist.js"></script>
   <script src="scanner.js"></script>
 </body>
 </html>

@@ -29,6 +29,12 @@ Inclut un **scanner d'endpoints** (bouton dans la popup):
   de session et affiche le status retourne par chaque methode. Pour
   chaque endpoint observe il y a aussi un bouton "Probe methodes" qui
   fait pareil en un clic.
+- **Bruteforce de chemins**: a partir d'une base path et d'une wordlist
+  editable (defaut: ~150 segments REST generiques + segments Starlink
+  observes), envoie `{base}/{segment}` pour chaque entree avec les
+  methodes choisies. Concurrence reglable (defaut 6 en parallele),
+  filtre 404 actif par defaut, progression en temps reel, export JSON
+  des resultats.
 
 ### Installation temporaire
 
