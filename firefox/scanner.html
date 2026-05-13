@@ -414,9 +414,18 @@
           <option value="none" selected>aucune  -  {champs...}</option>
           <option value="content">content  -  {content: [{champs...}]}</option>
           <option value="contentObj">content objet  -  {content: {champs...}}</option>
+          <option value="customerDetails">customerDetails  -  {top, value: JSON.stringify(inner)}</option>
           <option value="empty">aucun body (Content-Length: 0)</option>
           <option value="raw">raw (j'edite le JSON a la main)</option>
         </select>
+
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:end;">
+          <div style="flex:1;">
+            <label style="margin-top:0;">Numero de compte (pour requestId)</label>
+            <input id="accountNumber" type="text" placeholder="ACC-XXXXXXX-XXXXX-XX" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#e4e4e4;padding:6px 8px;font-family:'SF Mono','Consolas',monospace;font-size:11px;outline:none;" />
+          </div>
+          <button id="genRequestIdBtn" class="small-btn" style="white-space:nowrap;">Generer requestId</button>
+        </div>
 
         <label style="margin-top:14px;">Champs du formulaire</label>
         <div id="formFields" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;padding:4px;border:1px solid rgba(255,255,255,0.06);border-radius:6px;background:rgba(0,0,0,0.15);"></div>

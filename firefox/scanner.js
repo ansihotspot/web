@@ -518,12 +518,30 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details/obligations",
     wrap: "none",
     fields: [
-      { key: "verificationState", type: "string", value: "NotRequired", enabled: true },
-      { key: "isRestricted", type: "boolean", value: false, enabled: true },
-      { key: "configurationId", type: "number", value: -62, enabled: false },
-      { key: "stateChangeReason", type: "string", value: "", enabled: false },
-      { key: "verificationDeadlineDate", type: "date", value: "", enabled: false },
-      { key: "verificationExpiryDate", type: "date", value: "", enabled: false }
+      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "top" },
+      { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
+      { key: "configurationId", type: "number", value: -62, enabled: false, group: "top" },
+      { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
+      { key: "verificationDeadlineDate", type: "date", value: "", enabled: false, group: "top" },
+      { key: "verificationExpiryDate", type: "date", value: "", enabled: false, group: "top" }
+    ]
+  },
+  "customer-details-put-kyc": {
+    method: "PUT",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "customerDetails",
+    fields: [
+      { key: "configurationId", type: "number", value: -62, enabled: true, group: "top" },
+      { key: "requestId", type: "string", value: "", enabled: true, group: "top",
+        hint: "Format vu: ACC-XXXX-XXXX-XX<ISOTimestamp>. Utilise le bouton Generer requestId." },
+      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
+      { key: "nationality", type: "string", value: "FR", enabled: true, group: "inner" },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
+      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner" },
+      { key: "passport", type: "file", value: "", enabled: true, group: "inner",
+        hint: "Image du passeport (sera convertie en data:image/jpeg;base64,...)" },
+      { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
+        hint: "Selfie (sera converti en data:image/jpeg;base64,...)" }
     ]
   },
   "customer-details-put": {
@@ -531,17 +549,10 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "none",
     fields: [
-      { key: "fullLegalName", type: "string", value: "", enabled: true },
-      { key: "nationality", type: "string", value: "FR", enabled: true },
-      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true },
-      { key: "passportNumber", type: "string", value: "", enabled: true },
-      { key: "phoneNumber", type: "string", value: "", enabled: false },
-      { key: "addressLine1", type: "string", value: "", enabled: false },
-      { key: "addressLine2", type: "string", value: "", enabled: false },
-      { key: "city", type: "string", value: "", enabled: false },
-      { key: "region", type: "string", value: "", enabled: false },
-      { key: "postalCode", type: "string", value: "", enabled: false },
-      { key: "country", type: "string", value: "FR", enabled: false }
+      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "top" },
+      { key: "nationality", type: "string", value: "FR", enabled: true, group: "top" },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "top" },
+      { key: "passportNumber", type: "string", value: "", enabled: true, group: "top" }
     ]
   },
   "customer-details-post": {
@@ -549,10 +560,10 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "none",
     fields: [
-      { key: "fullLegalName", type: "string", value: "", enabled: true },
-      { key: "nationality", type: "string", value: "FR", enabled: true },
-      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true },
-      { key: "passportNumber", type: "string", value: "", enabled: true }
+      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "top" },
+      { key: "nationality", type: "string", value: "FR", enabled: true, group: "top" },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "top" },
+      { key: "passportNumber", type: "string", value: "", enabled: true, group: "top" }
     ]
   },
   "verification": {
@@ -560,9 +571,9 @@ var TEMPLATES = {
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details/verification",
     wrap: "none",
     fields: [
-      { key: "verificationState", type: "string", value: "Completed", enabled: true },
-      { key: "isRestricted", type: "boolean", value: false, enabled: true },
-      { key: "configurationId", type: "number", value: -62, enabled: false }
+      { key: "verificationState", type: "string", value: "Completed", enabled: true, group: "top" },
+      { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "top" },
+      { key: "configurationId", type: "number", value: -62, enabled: false, group: "top" }
     ]
   },
   "custom": {
@@ -578,9 +589,20 @@ function loadTemplate(name) {
   if (!tpl) return;
   document.querySelector('input[name="submitMethod"][value="' + tpl.method + '"]').checked = true;
   document.getElementById("submitUrl").value = tpl.url;
-  document.getElementById("submitWrap").value = tpl.wrap;
+  // ensure customerDetails wrap option exists in select
+  var wrapSel = document.getElementById("submitWrap");
+  if (tpl.wrap === "customerDetails" && !wrapSel.querySelector('option[value="customerDetails"]')) {
+    var opt = document.createElement("option");
+    opt.value = "customerDetails";
+    opt.textContent = "customerDetails  -  {top, value: JSON.stringify(inner)}";
+    wrapSel.appendChild(opt);
+  }
+  wrapSel.value = tpl.wrap;
   formFields = tpl.fields.map(function (f) {
-    return { key: f.key, type: f.type, value: f.value, enabled: f.enabled };
+    return {
+      key: f.key, type: f.type, value: f.value, enabled: f.enabled,
+      group: f.group || "top", hint: f.hint || null
+    };
   });
   renderFormFields();
   rebuildBodyFromForm();
@@ -596,8 +618,29 @@ function renderFormFields() {
     container.appendChild(hint);
     return;
   }
+  var lastGroup = null;
   for (var i = 0; i < formFields.length; i++) {
-    container.appendChild(renderFieldRow(i, formFields[i]));
+    var f = formFields[i];
+    var g = f.group || "top";
+    if (g !== lastGroup) {
+      var sep = document.createElement("div");
+      sep.style.cssText = "display:flex;align-items:center;gap:8px;margin:8px 4px 4px;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:" + (g === "inner" ? "#FF9800" : "#00d4ff") + ";";
+      var line = document.createElement("div");
+      line.style.cssText = "flex:1;height:1px;background:" + (g === "inner" ? "rgba(255,152,0,0.3)" : "rgba(0,212,255,0.3)") + ";";
+      var label = document.createElement("span");
+      label.textContent = g === "inner" ? "Champs inner  ->  JSON.stringify dans 'value'" : "Champs top-level";
+      sep.appendChild(label);
+      sep.appendChild(line);
+      container.appendChild(sep);
+      lastGroup = g;
+    }
+    container.appendChild(renderFieldRow(i, f));
+    if (f.hint) {
+      var h = document.createElement("div");
+      h.style.cssText = "font-size:9px;color:#666;padding:0 4px 0 34px;margin-bottom:2px;font-style:italic;";
+      h.textContent = f.hint;
+      container.appendChild(h);
+    }
   }
 }
 
@@ -643,7 +686,7 @@ function renderFieldRow(index, field) {
   // 5. type selector
   var typeSel = document.createElement("select");
   typeSel.style.cssText = "background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;color:#e4e4e4;padding:3px 4px;font-family:'SF Mono','Consolas',monospace;font-size:10px;outline:none;";
-  ["string", "number", "boolean", "date", "null"].forEach(function (t) {
+  ["string", "number", "boolean", "date", "file", "null"].forEach(function (t) {
     var opt = document.createElement("option");
     opt.value = t;
     opt.textContent = t;
@@ -696,6 +739,33 @@ function renderValueInput(index, field) {
     span.style.cssText = common + "color:#aaa;";
     return span;
   }
+  if (field.type === "file") {
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;gap:4px;align-items:center;";
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.style.cssText = "flex:1;color:#aaa;font-size:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:2px;";
+    var info = document.createElement("span");
+    info.style.cssText = "font-size:10px;color:" + (field.value && field.value.length > 0 ? "#4CAF50" : "#666") + ";white-space:nowrap;";
+    info.textContent = field.value ? "[" + Math.round(field.value.length / 1024) + " KB]" : "(vide)";
+    fileInput.addEventListener("change", function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        formFields[index].value = reader.result;
+        info.textContent = "[" + Math.round(reader.result.length / 1024) + " KB]";
+        info.style.color = "#4CAF50";
+        rebuildBodyFromForm();
+        showToast("Fichier encode: " + file.name);
+      };
+      reader.readAsDataURL(file);
+    });
+    wrap.appendChild(fileInput);
+    wrap.appendChild(info);
+    return wrap;
+  }
   var inp = document.createElement("input");
   inp.style.cssText = common;
   if (field.type === "number") {
@@ -733,12 +803,13 @@ function defaultValueForType(t) {
   return "";
 }
 
-function fieldsToObject() {
+function fieldsToObject(groupFilter) {
   var obj = {};
   for (var i = 0; i < formFields.length; i++) {
     var f = formFields[i];
     if (!f.enabled) continue;
     if (!f.key) continue;
+    if (groupFilter && (f.group || "top") !== groupFilter) continue;
     var v = f.value;
     if (f.type === "null") v = null;
     if (f.type === "number" && (v === "" || v === undefined)) v = null;
@@ -755,11 +826,18 @@ function rebuildBodyFromForm() {
     bodyEl.value = "";
     return;
   }
-  var obj = fieldsToObject();
   var out;
-  if (wrap === "content") out = { content: [obj] };
-  else if (wrap === "contentObj") out = { content: obj };
-  else out = obj;
+  if (wrap === "customerDetails") {
+    var top = fieldsToObject("top");
+    var inner = fieldsToObject("inner");
+    top.value = JSON.stringify(inner);
+    out = top;
+  } else {
+    var all = fieldsToObject(null);
+    if (wrap === "content") out = { content: [all] };
+    else if (wrap === "contentObj") out = { content: all };
+    else out = all;
+  }
   bodyEl.value = JSON.stringify(out, null, 2);
 }
 
@@ -769,6 +847,43 @@ function initSubmit() {
   });
 
   document.getElementById("submitWrap").addEventListener("change", rebuildBodyFromForm);
+
+  // Account number persistance + auto-fill from observed requests
+  var accEl = document.getElementById("accountNumber");
+  browserAPI.storage.local.get(["accountNumber"], function (s) {
+    if (s.accountNumber) accEl.value = s.accountNumber;
+    // tentative d'auto-detection si vide
+    if (!accEl.value) {
+      var keys = Object.keys(observedCache || {});
+      for (var k = 0; k < keys.length; k++) {
+        var url = (observedCache[keys[k]] && observedCache[keys[k]].sampleUrl) || "";
+        var m = url.match(/(ACC-\d+-\d+-\d+)/);
+        if (m) { accEl.value = m[1]; browserAPI.storage.local.set({ accountNumber: m[1] }); break; }
+      }
+    }
+  });
+  accEl.addEventListener("input", function () {
+    browserAPI.storage.local.set({ accountNumber: accEl.value });
+  });
+
+  document.getElementById("genRequestIdBtn").addEventListener("click", function () {
+    var acc = (accEl.value || "ACC-0000000-00000-00").trim();
+    var iso = new Date().toISOString();
+    var rid = acc + iso;
+    var idx = -1;
+    for (var i = 0; i < formFields.length; i++) {
+      if (formFields[i].key === "requestId") { idx = i; break; }
+    }
+    if (idx === -1) {
+      formFields.unshift({ key: "requestId", type: "string", value: rid, enabled: true, group: "top" });
+    } else {
+      formFields[idx].value = rid;
+      formFields[idx].enabled = true;
+    }
+    renderFormFields();
+    rebuildBodyFromForm();
+    showToast("requestId = " + rid);
+  });
 
   document.getElementById("addFieldBtn").addEventListener("click", function () {
     formFields.push({ key: "newField", type: "string", value: "", enabled: true });
