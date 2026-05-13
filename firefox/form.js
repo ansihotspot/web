@@ -29,15 +29,36 @@ var TEMPLATES = {
     fields: [
       { key: "configurationId", type: "number", value: -7, enabled: true, group: "top" },
       { key: "requestId", type: "string", value: "", enabled: true, group: "top",
-        hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli via le numero de compte et l'ISO." },
+        hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
+      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
+      { key: "nationality", type: "string", value: "FR", enabled: true, group: "inner" },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
+      { key: "identificationNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "Numero du document (ex: numero de passeport)" },
+      { key: "identificationDocumentType", type: "string", value: "passport", enabled: true, group: "inner",
+        hint: "Type de document: passport, idCard, driverLicense..." },
+      { key: "identificationDocument", type: "file", value: "", enabled: true, group: "inner",
+        hint: "Image du document (passeport/CI) - convertie en data:image/jpeg;base64,..." },
+      { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
+        hint: "Selfie - converti en data:image/jpeg;base64,..." }
+    ]
+  },
+  "customer-details-put-kyc-legacy": {
+    method: "PUT",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "customerDetails",
+    fields: [
+      { key: "configurationId", type: "number", value: -62, enabled: true, group: "top" },
+      { key: "requestId", type: "string", value: "", enabled: true, group: "top",
+        hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
       { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
       { key: "nationality", type: "string", value: "FR", enabled: true, group: "inner" },
       { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
       { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner" },
       { key: "passport", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Image du passeport (convertie en data:image/jpeg;base64,...)" },
+        hint: "Image du passeport - convertie en data:image/jpeg;base64,..." },
       { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Selfie (converti en data:image/jpeg;base64,...)" }
+        hint: "Selfie - converti en data:image/jpeg;base64,..." }
     ]
   },
   "customer-details-put": {
