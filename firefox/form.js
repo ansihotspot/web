@@ -44,15 +44,17 @@ var TEMPLATES = {
       { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
       { key: "nationality", type: "string", value: "FR", enabled: true, group: "inner" },
       { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
-      { key: "identificationNumber", type: "string", value: "", enabled: true, group: "inner",
-        hint: "Numero du document" },
       { key: "identificationDocumentType", type: "string", value: "Passport", enabled: true, group: "inner",
         choices: ["Passport", "NationalIdCard", "DriversLicense", "StudentOrSchoolCard", "ConsularCard", "ResidencePermit", "ElectoralCard", "RefugeeCard"],
-        hint: "Type de document (PascalCase strict)" },
+        hint: "REQUIRED. Le serveur peut restreindre a 3 valeurs selon ton compte." },
       { key: "identificationDocument", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Image du document - convertie en data:image/jpeg;base64,..." },
-      { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Selfie - converti en data:image/jpeg;base64,..." }
+        hint: "REQUIRED. Image du document - data:image/jpeg;base64,... (1 fichier max)" },
+      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "Conditionnel: requis si identificationDocumentType = Passport. Min 1, max 25." },
+      { key: "identificationDocumentNumber", type: "string", value: "", enabled: false, group: "inner",
+        hint: "Conditionnel: requis si type != Passport. Min 1, max 25." },
+      { key: "livePortrait", type: "file", value: "", enabled: false, group: "inner",
+        hint: "Selfie - probablement requis selon configuration. data:image/jpeg;base64,..." }
     ]
   },
   "customer-details-put-kyc-legacy": {
