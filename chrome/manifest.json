@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Starlink Form Submitter",
+  "version": "3.0.0",
+  "description": "Construit et envoie des requetes POST/PUT/PATCH sur l'API Starlink avec les cookies de session. Auto-detecte le numero de compte depuis /api/webagg/v1/referrals/account-info/...",
+  "permissions": [
+    "webRequest",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://starlink.com/*",
+    "https://*.starlink.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Starlink Form Submitter"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

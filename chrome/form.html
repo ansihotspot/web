@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Starlink Form Submitter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e4e4e4;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 18px; font-weight: 700;
+      margin-bottom: 4px; color: #fff;
+      display: flex; align-items: center; gap: 10px;
+    }
+    h1 .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #00d4ff; box-shadow: 0 0 8px #00d4ff;
+    }
+    .subtitle { font-size: 11px; color: #888; margin-bottom: 18px; }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .card h2 {
+      font-size: 12px; font-weight: 700;
+      color: #00d4ff;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card h2 .actions { display: flex; gap: 6px; }
+
+    button {
+      background: rgba(0,212,255,0.15);
+      color: #00d4ff;
+      border: 1px solid rgba(0,212,255,0.3);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 11px; cursor: pointer; transition: 0.15s;
+    }
+    button:hover { background: rgba(0,212,255,0.25); }
+    button.danger {
+      background: rgba(233,69,96,0.1); color: #e94560;
+      border-color: rgba(233,69,96,0.3);
+    }
+    button.danger:hover { background: rgba(233,69,96,0.2); }
+    button.primary {
+      background: linear-gradient(90deg, #2da44e, #1f6f43);
+      color: white; border: 0; font-weight: 700;
+      padding: 12px 14px; font-size: 13px;
+    }
+    button.primary:hover { filter: brightness(1.1); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .small-btn {
+      background: rgba(255,255,255,0.05); color: #aaa;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer;
+    }
+    .small-btn:hover { color: #00d4ff; border-color: rgba(0,212,255,0.3); }
+
+    label {
+      font-size: 10px; color: #888;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      display: block; margin: 12px 0 4px;
+    }
+    input[type="text"], input[type="number"], input[type="date"],
+    input[type="datetime-local"], textarea, select {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      color: #e4e4e4;
+      padding: 8px 10px;
+      font-family: 'SF Mono','Consolas',monospace;
+      font-size: 11px;
+      outline: none;
+    }
+    textarea { min-height: 200px; resize: vertical; }
+    input:focus, textarea:focus, select:focus { border-color: #00d4ff; }
+
+    .methods-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .method-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-family: 'SF Mono','Consolas',monospace;
+      font-size: 10px;
+      user-select: none;
+    }
+    .method-chip input { accent-color: #00d4ff; }
+
+    .acc-row {
+      background: rgba(0,212,255,0.06);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 6px;
+      padding: 10px;
+      margin: 8px 0;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px;
+    }
+    .acc-row .acc-label { color: #00d4ff; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+    .acc-row .acc-value { font-family: 'SF Mono','Consolas',monospace; color: #fff; flex: 1; }
+    .acc-row .acc-hint { font-size: 9px; color: #888; }
+
+    .toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #4CAF50; color: white;
+      padding: 10px 16px; border-radius: 6px;
+      font-size: 11px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <h1><span class="dot"></span>Starlink Form Submitter</h1>
+  <p class="subtitle">Construit et envoie une requete POST/PUT/PATCH avec les cookies de session.</p>
+
+  <div class="card">
+    <h2>
+      Envoyer une requete (formulaire)
+      <div class="actions">
+        <button id="addFieldBtn">+ Champ</button>
+        <button id="resetFormBtn" class="danger">Reset</button>
+      </div>
+    </h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+      <!-- COLONNE GAUCHE: parametres + formulaire -->
+      <div>
+        <label>Template</label>
+        <select id="submitTemplate">
+          <option value="travel-obligations">POST  travel-obligations/global (action, body vide)</option>
+          <option value="obligations-flat">POST  obligations (verificationState + isRestricted)</option>
+          <option value="customer-details-put-kyc" selected>PUT   customer-details Niger Identifications (config -7)</option>
+          <option value="customer-details-put-kyc-legacy">PUT   customer-details Mondial (config -62)</option>
+          <option value="customer-details-put-kyc-kirghizistan">PUT   customer-details Kirghizistan (config -35)</option>
+          <option value="customer-details-put">PUT   customer-details (identite simple)</option>
+          <option value="customer-details-post">POST  customer-details (identite simple)</option>
+          <option value="verification">POST  customer-details/verification</option>
+          <option value="custom">[ Custom URL ]</option>
+        </select>
+
+        <label>Methode</label>
+        <div class="methods-grid">
+          <label class="method-chip"><input type="radio" name="submitMethod" value="POST" checked> POST</label>
+          <label class="method-chip"><input type="radio" name="submitMethod" value="PUT"> PUT</label>
+          <label class="method-chip"><input type="radio" name="submitMethod" value="PATCH"> PATCH</label>
+        </div>
+
+        <label>URL complete</label>
+        <input id="submitUrl" type="text" value="https://starlink.com/api/accounts/v1/accounts/customer-details" />
+
+        <label>Enveloppe du body</label>
+        <select id="submitWrap">
+          <option value="none">aucune  -  {champs...}</option>
+          <option value="content">content  -  {content: [{champs...}]}</option>
+          <option value="contentObj">content objet  -  {content: {champs...}}</option>
+          <option value="customerDetails" selected>customerDetails  -  {top, value: JSON.stringify(inner)}</option>
+          <option value="empty">aucun body (Content-Length: 0)</option>
+          <option value="raw">raw (j'edite le JSON a la main)</option>
+        </select>
+
+        <div class="acc-row">
+          <span class="acc-label">Compte</span>
+          <span class="acc-value" id="accValue">-</span>
+          <span class="acc-hint" id="accHint">en attente de detection...</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">
+          <div>
+            <label style="margin-top:0;">Numero de compte</label>
+            <input id="accountNumber" type="text" placeholder="ACC-DF-XXXXXXXX-XXXXX-XX" />
+          </div>
+          <div>
+            <label style="margin-top:0;">ISO timestamp <span id="isoNowBadge" style="float:right;font-size:9px;color:#4CAF50;text-transform:none;letter-spacing:0;cursor:pointer;">auto</span></label>
+            <input id="isoTimestamp" type="datetime-local" step="0.001" />
+          </div>
+          <button id="genRequestIdBtn" class="small-btn" style="white-space:nowrap;">Regenerer</button>
+        </div>
+        <label style="margin-top:6px;display:block;font-size:10px;text-transform:none;letter-spacing:0;color:#888;">
+          <input id="autoIso" type="checkbox" checked style="vertical-align:middle;accent-color:#00d4ff;" />
+          ISO = maintenant a chaque envoi (decoche pour figer la date ci-dessus)
+        </label>
+
+        <label style="margin-top:14px;">Champs du formulaire</label>
+        <div id="formFields" style="display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;padding:4px;border:1px solid rgba(255,255,255,0.06);border-radius:6px;background:rgba(0,0,0,0.15);"></div>
+
+        <button id="submitBtn" class="primary" style="margin-top:14px;width:100%;">Envoyer la requete</button>
+      </div>
+
+      <!-- COLONNE DROITE: body + reponse -->
+      <div>
+        <label>
+          Body JSON envoye
+          <span style="float:right;font-size:9px;color:#666;text-transform:none;letter-spacing:0;">construit depuis le formulaire (ou editable en mode raw)</span>
+        </label>
+        <textarea id="submitBody" spellcheck="false"></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button id="copyBodyBtn" class="small-btn">Copier le body</button>
+          <button id="copyCurlBtn" class="small-btn">Copier en cURL</button>
+          <button id="rebuildBodyBtn" class="small-btn">Reconstruire</button>
+        </div>
+
+        <label>Reponse du serveur</label>
+        <div id="submitResponse" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;font-family:'SF Mono','Consolas',monospace;font-size:11px;min-height:160px;max-height:360px;overflow:auto;white-space:pre-wrap;color:#aaa;">En attente d'envoi...</div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button id="copyResponseBtn" class="small-btn">Copier la reponse</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">OK</div>
+
+  <script src="form.js"></script>
+</body>
+</html>
