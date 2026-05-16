@@ -28,70 +28,67 @@ var TEMPLATES = {
     method: "PUT",
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "customerDetails",
+    regionCode: "NE",
+    schemaRequired: ["identificationNumber", "identificationDocumentType", "identificationDocument"],
     fields: [
       { key: "configurationId", type: "number", value: -7, enabled: true, group: "top" },
       { key: "requestId", type: "string", value: "", enabled: true, group: "top",
         hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
-      { key: "identificationDocumentNumber", type: "string", value: "", enabled: true, group: "inner",
-        hint: "Numero du document" },
+      { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
+      { key: "identificationNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "Numero d'identification (min 1, max 25). Cle schema: identificationNumber." },
       { key: "identificationDocumentType", type: "string", value: "Passport", enabled: true, group: "inner",
-        choices: ["Passport", "NationalIdCard", "DriversLicense", "StudentOrSchoolCard", "ConsularCard", "ResidencePermit", "ElectoralCard", "RefugeeCard"],
-        hint: "Type de document (PascalCase strict)" },
-      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner" },
+        choices: ["NationalIdCard", "DriversLicense", "Passport", "StudentOrSchoolCard", "ConsularCard", "ResidencePermit", "ElectoralCard", "RefugeeCard"],
+        hint: "Type de piece (PascalCase strict, 8 choix Niger)." },
       { key: "identificationDocument", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Image du document - convertie en data:image/jpeg;base64,..." }
+        hint: "Image - jpeg/png/heic/pdf, 1 fichier max - data:...;base64,..." }
     ]
   },
   "customer-details-put-kyc-legacy": {
     method: "PUT",
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "customerDetails",
+    regionCode: "global",
+    schemaRequired: ["fullLegalName", "nationality", "dateOfBirth", "passportNumber", "passport", "livePortrait"],
     fields: [
       { key: "configurationId", type: "number", value: -62, enabled: true, group: "top" },
       { key: "requestId", type: "string", value: "", enabled: true, group: "top",
         hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
-      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "inner",
-        choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
-      { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "inner" },
-      { key: "isValid", type: "boolean", value: true, enabled: true, group: "inner" },
-      { key: "verificationDeadlineDate", type: "date", value: "", enabled: false, group: "inner",
-        hint: "Date limite de verification (ISO date)." },
-      { key: "verificationExpiryDate", type: "date", value: "", enabled: false, group: "inner",
-        hint: "Date d'expiration de la verification (ISO date)." },
-      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
-      { key: "nationality", type: "string", value: "FR", enabled: true, group: "inner" },
-      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
-      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner" },
+      { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
+      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner",
+        hint: "Nom legal complet (1-200)." },
+      { key: "nationality", type: "string", value: "FR", enabled: true, group: "inner",
+        hint: "Nationalite ISO-2 (FR, US, ...)." },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner",
+        hint: "Date de naissance (18+ ans, 120 max)." },
+      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "Numero de passeport (1-25)." },
       { key: "passport", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Image du passeport - convertie en data:image/jpeg;base64,..." },
+        hint: "Page identification passeport - jpeg/png/heic/pdf, 1 max." },
       { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Selfie - converti en data:image/jpeg;base64,..." }
+        hint: "Portrait en direct (camera frontale)." }
     ]
   },
-  "customer-details-put-kyc-kirghizistan": {
+  "customer-details-put-kyc-tadjikistan": {
     method: "PUT",
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
     wrap: "customerDetails",
+    regionCode: "TJ",
+    schemaRequired: ["identificationDocumentType", "identificationDocument"],
     fields: [
-      { key: "configurationId", type: "number", value: -35, enabled: true, group: "top" },
+      { key: "configurationId", type: "number", value: -50, enabled: true, group: "top" },
       { key: "requestId", type: "string", value: "", enabled: true, group: "top",
         hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
-      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "inner",
-        choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
-      { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "inner" },
-      { key: "isValid", type: "boolean", value: true, enabled: true, group: "inner" },
-      { key: "verificationDeadlineDate", type: "date", value: "", enabled: false, group: "inner",
-        hint: "Date limite de verification (ISO date)." },
-      { key: "verificationExpiryDate", type: "date", value: "", enabled: false, group: "inner",
-        hint: "Date d'expiration de la verification (ISO date)." },
-      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
-      { key: "nationality", type: "string", value: "KG", enabled: true, group: "inner" },
-      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
-      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner" },
-      { key: "passport", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Image du passeport - convertie en data:image/jpeg;base64,..." },
-      { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
-        hint: "Selfie - converti en data:image/jpeg;base64,..." }
+      { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
+      { key: "identificationDocumentType", type: "string", value: "Passport", enabled: true, group: "inner",
+        choices: ["Passport", "ResidencePermit", "RefugeeCertificate"],
+        hint: "3 choix Tadjikistan: Passport, ResidencePermit, RefugeeCertificate." },
+      { key: "identificationDocument", type: "file", value: "", enabled: true, group: "inner",
+        hint: "Image - jpeg/png/heic/pdf, 1 fichier max." },
+      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "Conditionnel: requis si identificationDocumentType = Passport (1-25)." },
+      { key: "identificationDocumentNumber", type: "string", value: "", enabled: false, group: "inner",
+        hint: "Conditionnel: requis si ResidencePermit/RefugeeCertificate (1-25)." }
     ]
   },
   "customer-details-put": {
@@ -157,9 +154,26 @@ function loadTemplate(name) {
       choices: f.choices || null
     };
   });
+  var typeField = null;
+  for (var i = 0; i < formFields.length; i++) {
+    if (formFields[i].key === "identificationDocumentType") { typeField = formFields[i]; break; }
+  }
+  if (typeField) applyDocTypeConditionals(typeField.value, true);
   renderFormFields();
   applyRequestId();
   rebuildBodyFromForm();
+}
+
+// Active passportNumber si type=Passport, sinon identificationDocumentNumber.
+// Ne touche aux champs que s'ils existent dans le template courant.
+function applyDocTypeConditionals(typeValue, skipRender) {
+  var hasPassport = false, hasIdNum = false;
+  for (var i = 0; i < formFields.length; i++) {
+    if (formFields[i].key === "passportNumber") { formFields[i].enabled = (typeValue === "Passport"); hasPassport = true; }
+    if (formFields[i].key === "identificationDocumentNumber") { formFields[i].enabled = (typeValue !== "Passport"); hasIdNum = true; }
+  }
+  if (!hasPassport && !hasIdNum) return;
+  if (!skipRender) renderFormFields();
 }
 
 function renderFormFields() {
@@ -278,6 +292,7 @@ function renderValueInput(index, field) {
     });
     sel.addEventListener("change", function () {
       formFields[index].value = sel.value;
+      if (field.key === "identificationDocumentType") applyDocTypeConditionals(sel.value);
       rebuildBodyFromForm();
     });
     return sel;
