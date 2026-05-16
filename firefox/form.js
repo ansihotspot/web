@@ -68,6 +68,32 @@ var TEMPLATES = {
         hint: "Selfie - converti en data:image/jpeg;base64,..." }
     ]
   },
+  "customer-details-put-kyc-kirghizistan": {
+    method: "PUT",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "customerDetails",
+    fields: [
+      { key: "configurationId", type: "number", value: -35, enabled: true, group: "top" },
+      { key: "requestId", type: "string", value: "", enabled: true, group: "top",
+        hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
+      { key: "verificationState", type: "string", value: "NotRequired", enabled: true, group: "inner",
+        choices: ["NotRequired", "Required", "Pending", "InProgress", "Completed", "Approved", "Rejected", "Failed"] },
+      { key: "isRestricted", type: "boolean", value: false, enabled: true, group: "inner" },
+      { key: "isValid", type: "boolean", value: true, enabled: true, group: "inner" },
+      { key: "verificationDeadlineDate", type: "date", value: "", enabled: false, group: "inner",
+        hint: "Date limite de verification (ISO date)." },
+      { key: "verificationExpiryDate", type: "date", value: "", enabled: false, group: "inner",
+        hint: "Date d'expiration de la verification (ISO date)." },
+      { key: "fullLegalName", type: "string", value: "", enabled: true, group: "inner" },
+      { key: "nationality", type: "string", value: "KG", enabled: true, group: "inner" },
+      { key: "dateOfBirth", type: "date", value: "1990-01-01", enabled: true, group: "inner" },
+      { key: "passportNumber", type: "string", value: "", enabled: true, group: "inner" },
+      { key: "passport", type: "file", value: "", enabled: true, group: "inner",
+        hint: "Image du passeport - convertie en data:image/jpeg;base64,..." },
+      { key: "livePortrait", type: "file", value: "", enabled: true, group: "inner",
+        hint: "Selfie - converti en data:image/jpeg;base64,..." }
+    ]
+  },
   "customer-details-put": {
     method: "PUT",
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
