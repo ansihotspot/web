@@ -91,6 +91,91 @@ var TEMPLATES = {
         hint: "Conditionnel: requis si ResidencePermit/RefugeeCertificate (1-25)." }
     ]
   },
+  "customer-details-put-kyc-citizen": {
+    method: "PUT",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "customerDetails",
+    regionCode: "",
+    schemaRequired: ["identificationDocumentTypeCitizen", "personalIdentificationNumber", "nationality", "dateOfBirth", "placeOfBirth", "identificationDocumentNumber", "dateOfIssuance"],
+    fields: [
+      { key: "configurationId", type: "number", value: -17, enabled: true, group: "top" },
+      { key: "requestId", type: "string", value: "", enabled: true, group: "top",
+        hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
+      { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
+      { key: "identificationDocumentTypeCitizen", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Type de piece (citoyen). PascalCase strict." },
+      { key: "personalIdentificationNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Numero d'identification personnel." },
+      { key: "nationality", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Nationalite ISO-2." },
+      { key: "dateOfBirth", type: "date", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Date de naissance." },
+      { key: "placeOfBirth", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Lieu de naissance." },
+      { key: "identificationDocumentNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Numero du document d'identite." },
+      { key: "dateOfIssuance", type: "date", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Date de delivrance du document." }
+    ]
+  },
+  "customer-details-put-kyc-legal-entity": {
+    method: "PUT",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "customerDetails",
+    regionCode: "",
+    schemaRequired: ["fullNameOfLegalEntity", "countryOfRegistration", "fullNameOfAuthorizedRepresentative", "identificationDocumentNumber"],
+    fields: [
+      { key: "configurationId", type: "number", value: -18, enabled: true, group: "top" },
+      { key: "requestId", type: "string", value: "", enabled: true, group: "top",
+        hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
+      { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
+      { key: "fullNameOfLegalEntity", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Raison sociale complete de la personne morale." },
+      { key: "countryOfRegistration", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Pays d'immatriculation (ISO-2)." },
+      { key: "fullNameOfAuthorizedRepresentative", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Nom complet du representant legal." },
+      { key: "identificationDocumentNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Numero du document d'identite." }
+    ]
+  },
+  "customer-details-put-kyc-resident": {
+    method: "PUT",
+    url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
+    wrap: "customerDetails",
+    regionCode: "",
+    schemaRequired: ["secondTelephoneNumber", "nationality", "sex", "dateOfBirth", "placeOfBirth", "isForeignNational", "identityDocument", "identityDocumentNumber", "accuracyDeclaration"],
+    fields: [
+      { key: "configurationId", type: "number", value: -19, enabled: true, group: "top" },
+      { key: "requestId", type: "string", value: "", enabled: true, group: "top",
+        hint: "Format: <accountNumber><ISOTimestamp>. Auto-rempli." },
+      { key: "stateChangeReason", type: "string", value: "", enabled: false, group: "top" },
+      { key: "isForeignNational", type: "boolean", value: false, enabled: true, group: "inner",
+        hint: "REQUIRED. true = etranger (non-resident), false = resident." },
+      { key: "identityDocumentTypeResident", type: "string", value: "", enabled: true, group: "inner",
+        hint: "Conditionnel: requis si isForeignNational = false (resident)." },
+      { key: "identityDocumentTypeNonResident", type: "string", value: "", enabled: false, group: "inner",
+        hint: "Conditionnel: requis si isForeignNational = true (etranger)." },
+      { key: "address", type: "string", value: "", enabled: false, group: "inner",
+        hint: "Conditionnel: requis si isForeignNational = true (etranger)." },
+      { key: "secondTelephoneNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Deuxieme numero de telephone." },
+      { key: "nationality", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Nationalite ISO-2." },
+      { key: "sex", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Sexe (valeur attendue par le serveur)." },
+      { key: "dateOfBirth", type: "date", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Date de naissance." },
+      { key: "placeOfBirth", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Lieu de naissance." },
+      { key: "identityDocument", type: "file", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Image du document - data:...;base64,..." },
+      { key: "identityDocumentNumber", type: "string", value: "", enabled: true, group: "inner",
+        hint: "REQUIRED. Numero du document d'identite." },
+      { key: "accuracyDeclaration", type: "boolean", value: true, enabled: true, group: "inner",
+        hint: "REQUIRED. Declaration d'exactitude des informations." }
+    ]
+  },
   "customer-details-put": {
     method: "PUT",
     url: "https://starlink.com/api/accounts/v1/accounts/customer-details",
@@ -154,11 +239,13 @@ function loadTemplate(name) {
       choices: f.choices || null
     };
   });
-  var typeField = null;
+  var typeField = null, foreignField = null;
   for (var i = 0; i < formFields.length; i++) {
-    if (formFields[i].key === "identificationDocumentType") { typeField = formFields[i]; break; }
+    if (formFields[i].key === "identificationDocumentType") typeField = formFields[i];
+    if (formFields[i].key === "isForeignNational") foreignField = formFields[i];
   }
   if (typeField) applyDocTypeConditionals(typeField.value, true);
+  if (foreignField) applyResidencyConditionals(foreignField.value, true);
   renderFormFields();
   applyRequestId();
   rebuildBodyFromForm();
@@ -173,6 +260,21 @@ function applyDocTypeConditionals(typeValue, skipRender) {
     if (formFields[i].key === "identificationDocumentNumber") { formFields[i].enabled = (typeValue !== "Passport"); hasIdNum = true; }
   }
   if (!hasPassport && !hasIdNum) return;
+  if (!skipRender) renderFormFields();
+}
+
+// Config -19: resident (isForeignNational=false) -> identityDocumentTypeResident.
+// Etranger (true) -> identityDocumentTypeNonResident + address.
+function applyResidencyConditionals(isForeign, skipRender) {
+  var found = false;
+  var foreign = isForeign === true || isForeign === "true";
+  for (var i = 0; i < formFields.length; i++) {
+    var k = formFields[i].key;
+    if (k === "identityDocumentTypeResident") { formFields[i].enabled = !foreign; found = true; }
+    if (k === "identityDocumentTypeNonResident") { formFields[i].enabled = foreign; found = true; }
+    if (k === "address") { formFields[i].enabled = foreign; found = true; }
+  }
+  if (!found) return;
   if (!skipRender) renderFormFields();
 }
 
@@ -308,6 +410,7 @@ function renderValueInput(index, field) {
     });
     sel.addEventListener("change", function () {
       formFields[index].value = sel.value === "true";
+      if (field.key === "isForeignNational") applyResidencyConditionals(sel.value === "true");
       rebuildBodyFromForm();
     });
     return sel;
