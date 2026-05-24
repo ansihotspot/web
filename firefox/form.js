@@ -661,11 +661,13 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   document.getElementById("submitWrap").addEventListener("change", rebuildBodyFromForm);
 
-  document.getElementById("addFieldBtn").addEventListener("click", function () {
-    formFields.push({ key: "newField", type: "string", value: "", enabled: true, group: "top" });
+  function addField(group) {
+    formFields.push({ key: "newField", type: "string", value: "", enabled: true, group: group });
     renderFormFields();
     rebuildBodyFromForm();
-  });
+  }
+  document.getElementById("addFieldBtn").addEventListener("click", function () { addField("top"); });
+  document.getElementById("addFieldInnerBtn").addEventListener("click", function () { addField("inner"); });
   document.getElementById("resetFormBtn").addEventListener("click", function () {
     if (!confirm("Vider le formulaire ?")) return;
     formFields = [];
